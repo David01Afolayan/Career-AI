@@ -1,464 +1,99 @@
-import { auth } from "@/auth";
+"use client";
+
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { db } from "@/lib/db";
-import ProfileCompletion from "@/components/ProfileCompletion";
+import { useEffect, useState } from "react";
 
-export const dynamic = "force-dynamic";
+type DashboardData = {
+  user: { name: string; email: string; role: string };
+  profile: {
+    completion: number;
+    cgpa: number | null;
+    department: string | null;
+    level: number | null;
+    projects: number;
+    certifications: number;
+  };
+  skills: { id: number; name: string; category: string; proficiency: number }[];
+  assessment: {
+    id: number;
+    score: number;
+    correctAnswers: number;
+    totalQuestions: number;
+    createdAt: string;
+  } | null;
+  career: null;
+  learning: {
+    progress: number;
+    totalResources: number;
+    completedResources: number;
+    inProgressResources: number;
+  };
+  nextAction: { title: string; description: string; href: string };
+};
 
-export default async function DashboardPage() {
-  const session = await auth();
+function proficiencyName(level: number) {
+  return level >= 3 ? "Advanced" : level >= 2 ? "Intermediate" : level >= 1 ? "Basic" : "Beginner";
+}
 
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
+export default function DashboardPage() {
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [error, setError] = useState("");
 
-  const user = await db.user.findUnique({
-    where: {
-      id: Number(session.user.id),
-    },
-    include: {
-      student: true,
-    },
-  });
-
-  if (!user) {
-    redirect("/login");
-  }
-
-  const profile = user.student;
-  const totalResources = await db.learningResource.count();
-  const completedProgress = profile
-    ? await db.progress.count({
-        where: {
-          studentId: profile.id,
-          status: "COMPLETED",
-        },
+  useEffect(() => {
+    fetch("/api/dashboard", { cache: "no-store" })
+      .then(async (response) => {
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Unable to load dashboard.");
+        setData(result);
       })
-    : 0;
-  const learningProgress =
-    totalResources > 0
-      ? Math.round((completedProgress / totalResources) * 100)
-      : 0;
+      .catch((loadError) => {
+        setError(loadError instanceof Error ? loadError.message : "Unable to connect to the server.");
+      });
+  }, []);
+
+  if (!data && !error) {
+    return <main className="min-h-screen bg-slate-950 px-6 py-16 text-center text-white"><div className="text-5xl">🚀</div><h1 className="mt-4 text-2xl font-bold">Loading CareerAI...</h1><p className="mt-2 text-slate-400">Preparing your personalized dashboard.</p></main>;
+  }
+  if (error || !data) {
+    return <main className="min-h-screen bg-slate-950 px-6 py-16 text-white"><div className="mx-auto max-w-xl rounded-2xl border border-red-500/30 bg-red-500/10 p-8 text-center"><h1 className="text-2xl font-bold">Dashboard Error</h1><p className="mt-3 text-red-300">{error}</p><button onClick={() => window.location.reload()} className="mt-6 rounded-xl bg-white px-5 py-3 font-semibold text-slate-900">Try Again</button></div></main>;
+  }
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
-      {/* NAVBAR */}
-      <nav className="border-b border-slate-800 bg-slate-950">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
-          <div>
-            <h1 className="text-2xl font-bold">
-              Career<span className="text-blue-500">AI</span>
-            </h1>
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <header className="flex flex-col justify-between gap-5 md:flex-row md:items-center">
+          <div><p className="text-sm font-semibold uppercase tracking-wider text-blue-400">CareerAI Dashboard</p><h1 className="mt-2 text-3xl font-bold sm:text-4xl">Welcome back, {data.user.name.split(" ")[0]} 👋</h1><p className="mt-2 text-slate-400">Track your skills, career path and learning progress.</p></div>
+          <div className="flex flex-wrap gap-3"><Link href="/profile" className="rounded-xl border border-slate-700 px-5 py-3 font-semibold text-slate-300 hover:bg-slate-800">Profile</Link><Link href="/assessment" className="rounded-xl bg-blue-600 px-5 py-3 font-semibold hover:bg-blue-500">Take Assessment</Link></div>
+        </header>
 
-            <p className="text-xs text-slate-500">
-              Career Guidance & Skill Recommendation
-            </p>
-          </div>
+        <section className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <Stat title="Profile Completion" value={`${data.profile.completion}%`} detail="Profile completeness" color="text-blue-400" bar={data.profile.completion} />
+          <Stat title="Latest Assessment" value={data.assessment ? `${data.assessment.score}%` : "Not taken"} detail={data.assessment ? `${data.assessment.correctAnswers}/${data.assessment.totalQuestions} correct` : "Take your first assessment"} />
+          <Stat title="Learning Progress" value={`${data.learning.progress}%`} detail={`${data.learning.completedResources} completed`} color="text-green-400" />
+          <Stat title="Technical Skills" value={String(data.skills.length)} detail="Skills currently tracked" />
+        </section>
 
-          <div className="flex items-center gap-4">
-            {session.user.role === "ADMIN" && (
-              <a
-                href="/admin"
-                className="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950"
-              >
-                Admin Dashboard
-              </a>
-            )}
+        <section className="mt-8 rounded-2xl border border-blue-500/30 bg-blue-500/10 p-6 sm:p-8">
+          <p className="text-sm font-semibold uppercase tracking-wider text-blue-400">AI Career Recommendation</p>
+          <h2 className="mt-3 text-2xl font-bold">No Career Recommendation Yet</h2>
+          <p className="mt-3 text-slate-400">Complete your profile and assessment to receive an AI-powered career recommendation.</p>
+          <Link href="/ai-result" className="mt-5 inline-block rounded-xl bg-blue-600 px-6 py-3 font-semibold hover:bg-blue-500">Get Recommendation →</Link>
+        </section>
 
-            <a
-              href="/profile"
-              className="rounded-lg border border-slate-700 px-4 py-2 text-sm hover:bg-slate-800"
-            >
-              My Profile
-            </a>
-            <div className="hidden text-right sm:block">
-              <p className="text-sm font-medium">
-                {user.name}
-              </p>
+        <section className="mt-8 rounded-2xl border border-yellow-500/20 bg-yellow-500/5 p-6"><p className="text-sm font-semibold uppercase tracking-wider text-yellow-400">Recommended Next Step</p><h2 className="mt-2 text-2xl font-bold">{data.nextAction.title}</h2><p className="mt-2 text-slate-400">{data.nextAction.description}</p><Link href={data.nextAction.href} className="mt-5 inline-block rounded-xl bg-yellow-500 px-6 py-3 font-bold text-slate-950 hover:bg-yellow-400">Continue →</Link></section>
 
-              <p className="text-xs text-slate-500">
-                {profile?.department || "Department not set"}
-              </p>
-            </div>
+        <section className="mt-8 grid gap-8 lg:grid-cols-2">
+          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 sm:p-8"><div className="flex items-center justify-between"><div><h2 className="text-2xl font-bold">Your Skills</h2><p className="mt-1 text-sm text-slate-400">Current proficiency levels</p></div><Link href="/skill-gap" className="text-sm font-semibold text-blue-400">Skill Gap →</Link></div>{data.skills.length === 0 ? <div className="mt-8 rounded-xl bg-slate-950 p-6 text-center"><p className="text-slate-400">No skills have been assessed yet.</p><Link href="/assessment" className="mt-4 inline-block font-semibold text-blue-400">Start Assessment →</Link></div> : <div className="mt-6 space-y-5">{data.skills.slice(0, 6).map((skill) => <div key={skill.id}><div className="mb-2 flex justify-between"><span className="text-sm font-semibold">{skill.name}</span><span className="text-xs text-slate-400">{proficiencyName(skill.proficiency)}</span></div><div className="h-2 overflow-hidden rounded-full bg-slate-800"><div className="h-full rounded-full bg-blue-500" style={{ width: `${(skill.proficiency / 3) * 100}%` }} /></div></div>)}</div>}</div>
+          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 sm:p-8"><div className="flex items-center justify-between"><div><h2 className="text-2xl font-bold">Learning Progress</h2><p className="mt-1 text-sm text-slate-400">Your roadmap progress</p></div><Link href="/progress" className="text-sm font-semibold text-blue-400">View All →</Link></div><div className="mt-8 text-center"><p className="text-5xl font-bold">{data.learning.progress}%</p><p className="mt-2 text-slate-500">complete</p><div className="mt-6 grid grid-cols-3 gap-3">{[["Total", data.learning.totalResources, ""], ["Completed", data.learning.completedResources, "text-green-400"], ["In Progress", data.learning.inProgressResources, "text-yellow-400"]].map(([label, value, color]) => <div key={label} className="rounded-xl bg-slate-950 p-3"><p className={`text-xl font-bold ${color}`}>{value}</p><p className="text-xs text-slate-500">{label}</p></div>)}</div></div></div>
+        </section>
 
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 font-bold">
-              {user.name?.charAt(0).toUpperCase()}
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      {/* CONTENT */}
-      <section className="mx-auto max-w-7xl px-6 py-10">
-        <div className="mb-6">
-          <ProfileCompletion />
-        </div>
-
-        {/* WELCOME */}
-        <div className="mb-8">
-          <p className="text-sm text-blue-400">
-            STUDENT DASHBOARD
-          </p>
-
-          <h2 className="mt-2 text-3xl font-bold sm:text-4xl">
-            Welcome back, {user.name?.split(" ")[0]} 👋
-          </h2>
-
-          <p className="mt-3 max-w-2xl text-slate-400">
-            Discover the technology career that best matches your
-            skills, interests and academic background.
-          </p>
-        </div>
-
-        {/* STATS */}
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            title="CGPA"
-            value={
-              profile?.cgpa !== null && profile?.cgpa !== undefined
-                ? profile.cgpa.toFixed(2)
-                : "Not Set"
-            }
-            description="Academic performance"
-            icon="🎓"
-          />
-
-          <StatCard
-            title="Skills"
-            value="0"
-            description="Skills added"
-            icon="🧠"
-          />
-
-          <StatCard
-            title="Career Match"
-            value="--"
-            description="Complete assessment"
-            icon="🎯"
-          />
-
-          <StatCard
-            title="Learning Progress"
-            value={`${learningProgress}%`}
-            description="Overall progress"
-            icon="📚"
-            href="/progress"
-            action="View Learning Progress"
-          />
-        </div>
-
-        {/* MAIN GRID */}
-        <div className="mt-8 grid gap-6 lg:grid-cols-3">
-          {/* CAREER RECOMMENDATION */}
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 lg:col-span-2">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-xl font-semibold">
-                  AI Career Recommendation
-                </h3>
-
-                <p className="mt-1 text-sm text-slate-400">
-                  Your recommended technology career will appear here.
-                </p>
-              </div>
-
-              <span className="rounded-full bg-blue-500/10 px-3 py-1 text-xs text-blue-400">
-                AI
-              </span>
-            </div>
-
-            <div className="mt-6 rounded-xl border border-dashed border-slate-700 p-8 text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-blue-500/10 text-3xl">
-                🎯
-              </div>
-
-              <h4 className="mt-4 text-lg font-semibold">
-                Complete Your Assessment
-              </h4>
-
-              <p className="mx-auto mt-2 max-w-md text-sm text-slate-400">
-                Tell CareerAI about your technical skills,
-                interests and experience so we can recommend
-                suitable career paths.
-              </p>
-
-              <div className="mt-6 flex flex-col gap-3 rounded-2xl bg-blue-600/90 p-2 sm:flex-row sm:items-stretch">
-                <a
-                  href="/assessment"
-                  className="inline-flex flex-1 items-center justify-center rounded-xl bg-transparent px-6 py-4 text-base font-semibold text-white transition hover:bg-white/5"
-                >
-                  Start Assessment
-                </a>
-
-                <a
-                  href="/ai-result"
-                  className="inline-flex flex-1 items-center justify-center rounded-xl bg-transparent px-5 py-4 text-base font-semibold text-white transition hover:bg-white/5"
-                >
-                  Get AI Career Recommendation
-                </a>
-              </div>
-            </div>
-          </div>
-
-          {/* PROFILE */}
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-            <h3 className="text-xl font-semibold">
-              My Profile
-            </h3>
-
-            <div className="mt-6 space-y-5">
-              <ProfileItem
-                label="Name"
-                value={user.name || "Not set"}
-              />
-
-              <ProfileItem
-                label="Email"
-                value={user.email}
-              />
-
-              <ProfileItem
-                label="Department"
-                value={profile?.department || "Not set"}
-              />
-
-              <ProfileItem
-                label="Level"
-                value={profile?.level?.toString() || "Not set"}
-              />
-
-              <ProfileItem
-                label="Matric Number"
-                value={
-                  profile?.matricNumber || "Not set"
-                }
-              />
-            </div>
-
-            <button className="mt-6 w-full rounded-lg border border-slate-700 py-3 text-sm font-medium hover:bg-slate-800">
-              Edit Profile
-            </button>
-          </div>
-        </div>
-
-        {/* SKILL GAP */}
-        <div className="mt-6 grid gap-6 lg:grid-cols-2">
-          <DashboardCard
-            icon="🧠"
-            title="Skill Gap Analysis"
-            description="Identify the skills you need to develop for your target career."
-            button="Analyze My Skills"
-            href="/skill-gap"
-          />
-
-          <DashboardCard
-            icon="📚"
-            title="Personalized Learning Roadmap"
-            description="Get recommended courses, projects and resources based on your skill gaps."
-            button="View Roadmap"
-          />
-        </div>
-
-        <div className="mt-6">
-          <a
-            href="/assessment/history"
-            className="block rounded-2xl border border-slate-800 bg-slate-900 p-6 transition hover:border-blue-500"
-          >
-            <div className="text-3xl">📊</div>
-            <h3 className="mt-4 text-xl font-bold">Assessment History</h3>
-            <p className="mt-2 text-sm text-slate-400">
-              Review previous assessments and track your skill development.
-            </p>
-            <span className="mt-4 inline-block font-semibold text-blue-400">
-              View History →
-            </span>
-          </a>
-        </div>
-
-        {/* CAREER OPTIONS */}
-        <div className="mt-8">
-          <h3 className="text-2xl font-bold">
-            Explore Technology Careers
-          </h3>
-
-          <p className="mt-2 text-slate-400">
-            Explore career paths before completing your assessment.
-          </p>
-
-          <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            <CareerCard
-              icon="💻"
-              title="Frontend Developer"
-              description="Build modern web interfaces."
-            />
-
-            <CareerCard
-              icon="⚙️"
-              title="Backend Developer"
-              description="Build APIs and server-side systems."
-            />
-
-            <CareerCard
-              icon="🤖"
-              title="Machine Learning Engineer"
-              description="Build intelligent software systems."
-            />
-
-            <CareerCard
-              icon="🔐"
-              title="Cybersecurity Analyst"
-              description="Protect systems and digital information."
-            />
-          </div>
-        </div>
-      </section>
+        <section className="mt-8"><h2 className="mb-5 text-2xl font-bold">Quick Access</h2><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{[["📊", "Assessment History", "Track your performance.", "/assessment/history"], ["💼", "Explore Careers", "Discover technology careers.", "/careers"], ["🗺️", "Learning Roadmap", "Build your required skills.", "/roadmap"], ["👤", "My Profile", "Update your information.", "/profile"]].map(([icon, title, description, href]) => <Link key={href} href={href} className="rounded-2xl border border-slate-800 bg-slate-900 p-5 transition hover:border-blue-500"><div className="text-3xl">{icon}</div><h3 className="mt-4 font-bold">{title}</h3><p className="mt-1 text-sm text-slate-500">{description}</p></Link>)}</div></section>
+        {data.user.role === "ADMIN" && <section className="mt-8 rounded-2xl border border-purple-500/20 bg-purple-500/5 p-6"><div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><p className="text-sm font-semibold text-purple-400">Administrator</p><h2 className="mt-1 text-xl font-bold">Manage CareerAI</h2></div><Link href="/admin" className="rounded-xl bg-purple-600 px-5 py-3 text-center font-semibold hover:bg-purple-500">Admin Dashboard →</Link></div></section>}
+      </div>
     </main>
   );
 }
 
-/* COMPONENTS */
-
-function StatCard({
-  title,
-  value,
-  description,
-  icon,
-  href,
-  action,
-}: {
-  title: string;
-  value: string;
-  description: string;
-  icon: string;
-  href?: string;
-  action?: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5">
-      <div className="flex items-center justify-between">
-        <span className="text-2xl">{icon}</span>
-
-        <span className="text-xs text-slate-500">
-          CareerAI
-        </span>
-      </div>
-
-      <p className="mt-5 text-sm text-slate-400">
-        {title}
-      </p>
-
-      <p className="mt-1 text-2xl font-bold">
-        {value}
-      </p>
-
-      <p className="mt-1 text-xs text-slate-500">
-        {description}
-      </p>
-
-      {href && action && (
-        <a
-          href={href}
-          className="mt-4 inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-        >
-          {action}
-        </a>
-      )}
-
-    </div>
-  );
-}
-
-function ProfileItem({
-  label,
-  value,
-}: {
-  label: string;
-  value: string | null;
-}) {
-  return (
-    <div>
-      <p className="text-xs uppercase tracking-wide text-slate-500">
-        {label}
-      </p>
-
-      <p className="mt-1 break-words text-sm text-slate-200">
-        {value || "Not set"}
-      </p>
-    </div>
-  );
-}
-
-function DashboardCard({
-  icon,
-  title,
-  description,
-  button,
-  href,
-}: {
-  icon: string;
-  title: string;
-  description: string;
-  button: string;
-  href?: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10 text-2xl">
-        {icon}
-      </div>
-
-      <h3 className="mt-5 text-xl font-semibold">
-        {title}
-      </h3>
-
-      <p className="mt-2 text-sm leading-6 text-slate-400">
-        {description}
-      </p>
-
-      {href ? (
-        <Link
-          href={href}
-          className="mt-5 inline-flex rounded-lg border border-slate-700 px-5 py-2.5 text-sm font-medium hover:bg-slate-800"
-        >
-          {button}
-        </Link>
-      ) : (
-        <button className="mt-5 rounded-lg border border-slate-700 px-5 py-2.5 text-sm font-medium hover:bg-slate-800">
-          {button}
-        </button>
-      )}
-    </div>
-  );
-}
-
-function CareerCard({
-  icon,
-  title,
-  description,
-}: {
-  icon: string;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5 transition hover:-translate-y-1 hover:border-blue-500/50">
-      <div className="text-3xl">{icon}</div>
-
-      <h4 className="mt-4 font-semibold">
-        {title}
-      </h4>
-
-      <p className="mt-2 text-sm text-slate-400">
-        {description}
-      </p>
-
-      <a
-        href="/careers"
-        className="mt-4 inline-block text-sm font-medium text-blue-400 hover:text-blue-300"
-      >
-        View Career Matches →
-      </a>
-    </div>
-  );
+function Stat({ title, value, detail, color = "", bar }: { title: string; value: string; detail: string; color?: string; bar?: number }) {
+  return <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6"><p className="text-sm text-slate-400">{title}</p><p className={`mt-2 text-3xl font-bold ${color}`}>{value}</p><p className="mt-1 text-sm text-slate-500">{detail}</p>{bar !== undefined && <div className="mt-4 h-2 rounded-full bg-slate-800"><div className="h-2 rounded-full bg-blue-500" style={{ width: `${bar}%` }} /></div>}</div>;
 }
