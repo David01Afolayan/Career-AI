@@ -128,7 +128,21 @@ const questions: QuestionSeed[] = [
 async function main() {
   console.log("Seeding expanded assessment question bank...");
 
-  await prisma.assessmentQuestion.deleteMany();
+  const existingQuestionCount = await prisma.assessmentQuestion.count();
+
+  if (existingQuestionCount >= 80) {
+    console.log(`ℹ️ ${existingQuestionCount} assessment questions already exist.`);
+    console.log("ℹ️ Skipping assessment question reset.");
+    return;
+  }
+
+  if (existingQuestionCount > 0) {
+    throw new Error(
+      "Assessment question bank is partially populated. Refusing to delete existing questions.",
+    );
+  }
+
+  console.log("🧹 Assessment question bank is empty.");
 
   const skills = await prisma.skill.findMany({
     select: { id: true, name: true },

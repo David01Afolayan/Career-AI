@@ -99,12 +99,15 @@ export async function POST() {
 
     const mlApiUrl = (process.env.ML_API_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10_000);
+    const timeout = setTimeout(() => controller.abort(), 60_000);
     let mlResponse: Response;
     try {
       mlResponse = await fetch(`${mlApiUrl}/predict`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-ml-api-key": process.env.ML_API_KEY || "",
+        },
         body: JSON.stringify(features),
         cache: "no-store",
         signal: controller.signal,

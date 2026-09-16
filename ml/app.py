@@ -1,4 +1,8 @@
-from fastapi import FastAPI, HTTPException
+import os
+import secrets
+
+from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
 import pandas as pd
 import joblib
@@ -15,6 +19,25 @@ app = FastAPI(
     description="Machine learning service for CareerAI",
     version="1.0.0",
 )
+
+ML_API_KEY = os.getenv("ML_API_KEY")
+api_key_header = APIKeyHeader(name="x-ml-api-key", auto_error=False)
+
+
+def verify_ml_api_key(
+    api_key: str | None = Depends(api_key_header),
+):
+    if not ML_API_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="ML service is not configured.",
+        )
+    if not api_key or not secrets.compare_digest(api_key, ML_API_KEY):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Unauthorized.",
+        )
+    return True
 
 
 # =========================
@@ -89,7 +112,7 @@ def health():
 # =========================
 
 
-@app.post("/predict")
+@app.post("/predict", dependencies=[Depends(verify_ml_api_key)])
 def predict(profile: StudentProfile):
 
     if model is None or encoder is None:
@@ -174,16 +197,12 @@ def predict(profile: StudentProfile):
         }
 
     except Exception as error:
-
-        print(
-            "Prediction error:",
-            error
-        )
+        print("Prediction error:", error)
 
         if isinstance(error, HTTPException):
             raise
 
         raise HTTPException(
-            status_code=500,
-            detail=str(error),
+            status_code=503,
+            detail="Prediction service is temporarily unavailable.",
         )

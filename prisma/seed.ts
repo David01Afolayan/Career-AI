@@ -301,21 +301,25 @@ async function main() {
 
   console.log(`Seeded ${careers.length} career records.`);
 
-  const adminPassword = await bcrypt.hash(
-    "Admin@12345",
-    10
-  );
+  const adminSeedPassword = process.env.ADMIN_SEED_PASSWORD;
+  if (!adminSeedPassword) {
+    throw new Error("ADMIN_SEED_PASSWORD is required.");
+  }
+
+  const adminEmail =
+    process.env.ADMIN_SEED_EMAIL || "admin@careerai.com";
+  const adminPassword = await bcrypt.hash(adminSeedPassword, 12);
 
   const admin = await db.user.upsert({
     where: {
-      email: "admin@careerai.com",
+      email: adminEmail,
     },
     update: {
       role: "ADMIN",
     },
     create: {
       name: "CareerAI Administrator",
-      email: "admin@careerai.com",
+      email: adminEmail,
       passwordHash: adminPassword,
       role: "ADMIN",
     },
