@@ -19,22 +19,50 @@ model User {
 }
 
 model Assessment {
-  id              Int      @id @default(autoincrement())
+  id              Int                @id @default(autoincrement())
   userId          Int
   score           Int
   strengths       String?
   interests       String?
   recommendations String?
-  createdAt       DateTime @default(now())
+  createdAt       DateTime           @default(now())
+  questionAnswers AssessmentAnswer[]
+}
+
+model AssessmentQuestion {
+  id            String   @id @default(cuid())
+  skillId       Int
+  question      String
+  options       Json
+  correctAnswer Int
+  explanation   String?
+  difficulty    String   @default("Beginner")
+  createdAt     DateTime @default(now())
+
+  skill   Skill              @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  answers AssessmentAnswer[]
+}
+
+model AssessmentAnswer {
+  id             String  @id @default(cuid())
+  assessmentId   Int
+  questionId     String
+  selectedAnswer Int
+  isCorrect      Boolean
+
+  assessment Assessment         @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  question   AssessmentQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([assessmentId, questionId])
 }
 
 model Career {
-  id             Int     @id @default(autoincrement())
+  id             Int           @id @default(autoincrement())
   title          String
   category       String
   description    String
   requiredSkills String
-  demandLevel    String  @default("Medium")
+  demandLevel    String        @default("Medium")
   salaryRange    String?
   predictions    Prediction[]
   skills         CareerSkill[]
@@ -48,30 +76,31 @@ model Prediction {
 }
 
 model Skill {
-  id                Int                @id @default(autoincrement())
-  name              String             @unique
-  category          String             @default("Technical")
-  description       String?
-  learningResources LearningResource[]
-  students          StudentSkill[]
-  careers           CareerSkill[]
+  id                  Int                  @id @default(autoincrement())
+  name                String               @unique
+  category            String               @default("Technical")
+  description         String?
+  learningResources   LearningResource[]
+  students            StudentSkill[]
+  careers             CareerSkill[]
+  assessmentQuestions AssessmentQuestion[]
 }
 
 model CareerSkill {
   careerId      Int
   skillId       Int
-  requiredLevel Int      @default(1)
-  importance    Int      @default(1)
-  career        Career   @relation(fields: [careerId], references: [id], onDelete: Cascade)
-  skill         Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  requiredLevel Int    @default(1)
+  importance    Int    @default(1)
+  career        Career @relation(fields: [careerId], references: [id], onDelete: Cascade)
+  skill         Skill  @relation(fields: [skillId], references: [id], onDelete: Cascade)
 
   @@id([careerId, skillId])
 }
 
 model LearningResource {
-  id           String @id
+  id           String     @id
   skillId      Int
-  skill        Skill  @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  skill        Skill      @relation(fields: [skillId], references: [id], onDelete: Cascade)
   title        String
   description  String
   url          String
@@ -81,9 +110,9 @@ model LearningResource {
 }
 
 model Student {
-  id             Int        @id @default(autoincrement())
-  userId         Int        @unique
-  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             Int            @id @default(autoincrement())
+  userId         Int            @unique
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   progress       Progress[]
   skills         StudentSkill[]
   matricNumber   String?
@@ -92,17 +121,18 @@ model Student {
   cgpa           Float?
   interests      String?
   experience     String?
-  projects       Int        @default(0)
-  certifications Int        @default(0)
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  projects       Int            @default(0)
+  certifications Int            @default(0)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 }
 
 model StudentSkill {
-  studentId Int
-  skillId   Int
-  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  skill     Skill   @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  studentId        Int
+  skillId          Int
+  proficiencyLevel Int     @default(0)
+  student          Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  skill            Skill   @relation(fields: [skillId], references: [id], onDelete: Cascade)
 
   @@id([studentId, skillId])
 }
@@ -114,14 +144,14 @@ enum ProgressStatus {
 }
 
 model Progress {
-  id                   Int            @id @default(autoincrement())
+  id                   Int              @id @default(autoincrement())
   studentId            Int
   resourceId           String
-  status               ProgressStatus @default(NOT_STARTED)
-  completionPercentage Int            @default(0)
-  createdAt            DateTime       @default(now())
-  updatedAt            DateTime       @updatedAt
-  student              Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  status               ProgressStatus   @default(NOT_STARTED)
+  completionPercentage Int              @default(0)
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+  student              Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
   resource             LearningResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, resourceId])
