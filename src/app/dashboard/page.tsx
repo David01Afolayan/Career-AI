@@ -2,37 +2,35 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 type DashboardData = {
   user: { name: string; email: string; role: string };
-  profile: {
-    completion: number;
-    cgpa: number | null;
-    department: string | null;
-    level: number | null;
-    projects: number;
-    certifications: number;
-  };
-  skills: { id: number; name: string; category: string; proficiency: number }[];
-  assessment: {
-    id: number;
-    score: number;
-    correctAnswers: number;
-    totalQuestions: number;
-    createdAt: string;
-  } | null;
-  career: null;
-  learning: {
-    progress: number;
-    totalResources: number;
-    completedResources: number;
-    inProgressResources: number;
-  };
+  profileCompletion: number;
+  latestAssessment: { score: number; date: string } | null;
+  assessmentStats: { total: number; averageScore: number; latestScore: number | null };
+  assessmentScores: { id: number; score: number; date: string }[];
+  latestPrediction: { career: string; confidence: number; careerId: number; date: string } | null;
+  careerHistory: { id: number; career: string; confidence: number; careerId: number; date: string }[];
+  skills: { skill: string; level: number; category: string }[];
+  strongestSkills: { skill: string; level: number }[];
+  improvementSkills: { skill: string; level: number }[];
+  learning: { totalResources: number; completedResources: number; inProgressResources: number; progress: number };
   nextAction: { title: string; description: string; href: string };
 };
 
-function proficiencyName(level: number) {
-  return level >= 3 ? "Advanced" : level >= 2 ? "Intermediate" : level >= 1 ? "Basic" : "Beginner";
+function levelName(level: number) {
+  return level === 3 ? "Advanced" : level === 2 ? "Intermediate" : level === 1 ? "Basic" : "Beginner";
 }
 
 export default function DashboardPage() {
@@ -46,54 +44,64 @@ export default function DashboardPage() {
         if (!response.ok) throw new Error(result.error || "Unable to load dashboard.");
         setData(result);
       })
-      .catch((loadError) => {
-        setError(loadError instanceof Error ? loadError.message : "Unable to connect to the server.");
+      .catch((requestError) => {
+        setError(requestError instanceof Error ? requestError.message : "Unable to load dashboard.");
       });
   }, []);
 
   if (!data && !error) {
-    return <main className="min-h-screen bg-slate-950 px-6 py-16 text-center text-white"><div className="text-5xl">🚀</div><h1 className="mt-4 text-2xl font-bold">Loading CareerAI...</h1><p className="mt-2 text-slate-400">Preparing your personalized dashboard.</p></main>;
+    return <main className="flex min-h-screen items-center justify-center bg-slate-950 text-white">Loading dashboard...</main>;
   }
-  if (error || !data) {
-    return <main className="min-h-screen bg-slate-950 px-6 py-16 text-white"><div className="mx-auto max-w-xl rounded-2xl border border-red-500/30 bg-red-500/10 p-8 text-center"><h1 className="text-2xl font-bold">Dashboard Error</h1><p className="mt-3 text-red-300">{error}</p><button onClick={() => window.location.reload()} className="mt-6 rounded-xl bg-white px-5 py-3 font-semibold text-slate-900">Try Again</button></div></main>;
+  if (!data) {
+    return <main className="flex min-h-screen items-center justify-center bg-slate-950 p-6 text-center text-white"><div><h1 className="text-2xl font-bold">Dashboard Error</h1><p className="mt-2 text-red-300">{error}</p><button onClick={() => window.location.reload()} className="mt-5 rounded-lg bg-white px-5 py-3 font-semibold text-slate-900">Try Again</button></div></main>;
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-slate-950 px-4 py-8 text-white sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl">
         <header className="flex flex-col justify-between gap-5 md:flex-row md:items-center">
-          <div><p className="text-sm font-semibold uppercase tracking-wider text-blue-400">CareerAI Dashboard</p><h1 className="mt-2 text-3xl font-bold sm:text-4xl">Welcome back, {data.user.name.split(" ")[0]} 👋</h1><p className="mt-2 text-slate-400">Track your skills, career path and learning progress.</p></div>
-          <div className="flex flex-wrap gap-3"><Link href="/profile" className="rounded-xl border border-slate-700 px-5 py-3 font-semibold text-slate-300 hover:bg-slate-800">Profile</Link><Link href="/assessment" className="rounded-xl bg-blue-600 px-5 py-3 font-semibold hover:bg-blue-500">Take Assessment</Link></div>
+          <div><p className="text-sm font-semibold uppercase tracking-wider text-blue-400">Student Dashboard</p><h1 className="mt-2 text-3xl font-bold sm:text-4xl">Welcome, {data.user.name}</h1><p className="mt-2 text-slate-400">Track your skills, assessments, recommendations and learning progress.</p></div>
+          <Link href="/profile" className="rounded-xl border border-slate-700 px-5 py-3 text-center font-semibold text-slate-300 hover:bg-slate-800">Edit Profile</Link>
         </header>
 
         <section className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat title="Profile Completion" value={`${data.profile.completion}%`} detail="Profile completeness" color="text-blue-400" bar={data.profile.completion} />
-          <Stat title="Latest Assessment" value={data.assessment ? `${data.assessment.score}%` : "Not taken"} detail={data.assessment ? `${data.assessment.correctAnswers}/${data.assessment.totalQuestions} correct` : "Take your first assessment"} />
-          <Stat title="Learning Progress" value={`${data.learning.progress}%`} detail={`${data.learning.completedResources} completed`} color="text-green-400" />
-          <Stat title="Technical Skills" value={String(data.skills.length)} detail="Skills currently tracked" />
+          <Stat title="Profile Completion" value={`${data.profileCompletion}%`} detail="Profile completeness" progress={data.profileCompletion} />
+          <Stat title="Latest Assessment" value={data.latestAssessment ? `${data.latestAssessment.score}%` : "—"} detail={`${data.assessmentStats.total} assessment${data.assessmentStats.total === 1 ? "" : "s"}`} />
+          <Stat title="Learning Progress" value={`${data.learning.progress}%`} detail={`${data.learning.completedResources} completed`} />
+          <Stat title="AI Career Match" value={data.latestPrediction?.career || "Not available"} detail={data.latestPrediction ? `${data.latestPrediction.confidence}% confidence` : "Complete an assessment"} />
         </section>
 
-        <section className="mt-8 rounded-2xl border border-blue-500/30 bg-blue-500/10 p-6 sm:p-8">
-          <p className="text-sm font-semibold uppercase tracking-wider text-blue-400">AI Career Recommendation</p>
-          <h2 className="mt-3 text-2xl font-bold">No Career Recommendation Yet</h2>
-          <p className="mt-3 text-slate-400">Complete your profile and assessment to receive an AI-powered career recommendation.</p>
-          <Link href="/ai-result" className="mt-5 inline-block rounded-xl bg-blue-600 px-6 py-3 font-semibold hover:bg-blue-500">Get Recommendation →</Link>
+        <section className="mt-8 rounded-2xl border border-yellow-500/20 bg-yellow-500/5 p-6"><p className="text-sm font-semibold uppercase tracking-wider text-yellow-400">Recommended Next Step</p><h2 className="mt-2 text-2xl font-bold">{data.nextAction.title}</h2><p className="mt-2 text-slate-400">{data.nextAction.description}</p><Link href={data.nextAction.href} className="mt-5 inline-block rounded-xl bg-yellow-500 px-6 py-3 font-bold text-slate-950">Continue →</Link></section>
+
+        <section className="mt-8 grid gap-6 lg:grid-cols-2">
+          <ChartCard title="Assessment Performance" empty={data.assessmentScores.length === 0}><ResponsiveContainer width="100%" height={280}><LineChart data={data.assessmentScores}><CartesianGrid strokeDasharray="3 3" stroke="#334155" /><XAxis dataKey="date" stroke="#94a3b8" /><YAxis domain={[0, 100]} stroke="#94a3b8" /><Tooltip /><Line type="monotone" dataKey="score" stroke="#38bdf8" strokeWidth={3} /></LineChart></ResponsiveContainer></ChartCard>
+          <ChartCard title="Skill Proficiency" empty={data.skills.length === 0}><ResponsiveContainer width="100%" height={280}><BarChart data={data.skills} layout="vertical"><CartesianGrid strokeDasharray="3 3" stroke="#334155" /><XAxis type="number" domain={[0, 3]} ticks={[0, 1, 2, 3]} stroke="#94a3b8" /><YAxis type="category" dataKey="skill" width={110} stroke="#94a3b8" /><Tooltip /><Bar dataKey="level" fill="#3b82f6" /></BarChart></ResponsiveContainer></ChartCard>
         </section>
 
-        <section className="mt-8 rounded-2xl border border-yellow-500/20 bg-yellow-500/5 p-6"><p className="text-sm font-semibold uppercase tracking-wider text-yellow-400">Recommended Next Step</p><h2 className="mt-2 text-2xl font-bold">{data.nextAction.title}</h2><p className="mt-2 text-slate-400">{data.nextAction.description}</p><Link href={data.nextAction.href} className="mt-5 inline-block rounded-xl bg-yellow-500 px-6 py-3 font-bold text-slate-950 hover:bg-yellow-400">Continue →</Link></section>
-
-        <section className="mt-8 grid gap-8 lg:grid-cols-2">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 sm:p-8"><div className="flex items-center justify-between"><div><h2 className="text-2xl font-bold">Your Skills</h2><p className="mt-1 text-sm text-slate-400">Current proficiency levels</p></div><Link href="/skill-gap" className="text-sm font-semibold text-blue-400">Skill Gap →</Link></div>{data.skills.length === 0 ? <div className="mt-8 rounded-xl bg-slate-950 p-6 text-center"><p className="text-slate-400">No skills have been assessed yet.</p><Link href="/assessment" className="mt-4 inline-block font-semibold text-blue-400">Start Assessment →</Link></div> : <div className="mt-6 space-y-5">{data.skills.slice(0, 6).map((skill) => <div key={skill.id}><div className="mb-2 flex justify-between"><span className="text-sm font-semibold">{skill.name}</span><span className="text-xs text-slate-400">{proficiencyName(skill.proficiency)}</span></div><div className="h-2 overflow-hidden rounded-full bg-slate-800"><div className="h-full rounded-full bg-blue-500" style={{ width: `${(skill.proficiency / 3) * 100}%` }} /></div></div>)}</div>}</div>
-          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 sm:p-8"><div className="flex items-center justify-between"><div><h2 className="text-2xl font-bold">Learning Progress</h2><p className="mt-1 text-sm text-slate-400">Your roadmap progress</p></div><Link href="/progress" className="text-sm font-semibold text-blue-400">View All →</Link></div><div className="mt-8 text-center"><p className="text-5xl font-bold">{data.learning.progress}%</p><p className="mt-2 text-slate-500">complete</p><div className="mt-6 grid grid-cols-3 gap-3">{[["Total", data.learning.totalResources, ""], ["Completed", data.learning.completedResources, "text-green-400"], ["In Progress", data.learning.inProgressResources, "text-yellow-400"]].map(([label, value, color]) => <div key={label} className="rounded-xl bg-slate-950 p-3"><p className={`text-xl font-bold ${color}`}>{value}</p><p className="text-xs text-slate-500">{label}</p></div>)}</div></div></div>
+        <section className="mt-8 grid gap-6 md:grid-cols-2">
+          <SkillList title="Strongest Skills" items={data.strongestSkills} tone="green" />
+          <SkillList title="Skills to Improve" items={data.improvementSkills} tone="yellow" />
         </section>
 
-        <section className="mt-8"><h2 className="mb-5 text-2xl font-bold">Quick Access</h2><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{[["📊", "Assessment History", "Track your performance.", "/assessment/history"], ["💼", "Explore Careers", "Discover technology careers.", "/careers"], ["🗺️", "Learning Roadmap", "Build your required skills.", "/roadmap"], ["👤", "My Profile", "Update your information.", "/profile"]].map(([icon, title, description, href]) => <Link key={href} href={href} className="rounded-2xl border border-slate-800 bg-slate-900 p-5 transition hover:border-blue-500"><div className="text-3xl">{icon}</div><h3 className="mt-4 font-bold">{title}</h3><p className="mt-1 text-sm text-slate-500">{description}</p></Link>)}</div></section>
-        {data.user.role === "ADMIN" && <section className="mt-8 rounded-2xl border border-purple-500/20 bg-purple-500/5 p-6"><div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><p className="text-sm font-semibold text-purple-400">Administrator</p><h2 className="mt-1 text-xl font-bold">Manage CareerAI</h2></div><Link href="/admin" className="rounded-xl bg-purple-600 px-5 py-3 text-center font-semibold hover:bg-purple-500">Admin Dashboard →</Link></div></section>}
+        <section className="mt-8 rounded-2xl border border-slate-800 bg-slate-900 p-6"><div className="flex flex-col justify-between gap-3 sm:flex-row"><div><h2 className="text-xl font-bold">Career Recommendation History</h2><p className="text-sm text-slate-400">Previous AI career recommendations.</p></div><Link href="/ai-result" className="text-sm font-semibold text-blue-400">Get New Recommendation →</Link></div>{data.careerHistory.length === 0 ? <p className="mt-5 text-slate-400">No career recommendations yet.</p> : <div className="mt-5 overflow-x-auto"><table className="w-full text-left"><thead><tr className="border-b border-slate-700 text-sm text-slate-400"><th className="px-3 py-3">Career</th><th className="px-3 py-3">Confidence</th><th className="px-3 py-3">Date</th></tr></thead><tbody>{data.careerHistory.map((item) => <tr key={item.id} className="border-b border-slate-800 last:border-0"><td className="px-3 py-4 font-medium">{item.career}</td><td className="px-3 py-4">{item.confidence}%</td><td className="px-3 py-4 text-slate-400">{item.date}</td></tr>)}</tbody></table></div>}</section>
+
+        <section className="mt-8 rounded-2xl border border-slate-800 bg-slate-900 p-6"><div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center"><div><h2 className="text-xl font-bold">Learning Progress</h2><p className="mt-1 text-sm text-slate-400">Continue working through your roadmap resources.</p></div><Link href="/roadmap" className="rounded-lg bg-blue-600 px-5 py-3 text-center font-semibold">Open Roadmap →</Link></div><div className="mt-6 flex justify-between text-sm"><span>Overall Progress</span><span>{data.learning.progress}%</span></div><div className="mt-2 h-3 overflow-hidden rounded-full bg-slate-800"><div className="h-full rounded-full bg-blue-500" style={{ width: `${data.learning.progress}%` }} /></div><div className="mt-5 grid gap-4 sm:grid-cols-3">{[["Resources", data.learning.totalResources], ["Completed", data.learning.completedResources], ["In Progress", data.learning.inProgressResources]].map(([label, value]) => <div key={label} className="rounded-xl bg-slate-950 p-4"><p className="text-2xl font-bold">{value}</p><p className="text-sm text-slate-400">{label}</p></div>)}</div></section>
+
+        <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">{[["Assessment", "/assessment"], ["History", "/assessment/history"], ["Careers", "/careers"], ["Skill Gap", "/skill-gap"], ["Profile", "/profile"]].map(([label, href]) => <Link key={href} href={href} className="rounded-xl border border-slate-800 bg-slate-900 p-5 font-semibold transition hover:border-blue-500">{label}<p className="mt-2 text-sm font-normal text-slate-400">Open {label}</p></Link>)}</section>
+        {data.user.role === "ADMIN" && <section className="mt-8 rounded-2xl bg-slate-900 p-6"><h2 className="text-xl font-bold">Administration</h2><Link href="/admin" className="mt-4 inline-block rounded-lg bg-white px-4 py-2 font-medium text-slate-900">Admin Dashboard</Link></section>}
       </div>
     </main>
   );
 }
 
-function Stat({ title, value, detail, color = "", bar }: { title: string; value: string; detail: string; color?: string; bar?: number }) {
-  return <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6"><p className="text-sm text-slate-400">{title}</p><p className={`mt-2 text-3xl font-bold ${color}`}>{value}</p><p className="mt-1 text-sm text-slate-500">{detail}</p>{bar !== undefined && <div className="mt-4 h-2 rounded-full bg-slate-800"><div className="h-2 rounded-full bg-blue-500" style={{ width: `${bar}%` }} /></div>}</div>;
+function Stat({ title, value, detail, progress }: { title: string; value: string; detail: string; progress?: number }) {
+  return <div className="rounded-2xl border border-slate-800 bg-slate-900 p-5"><p className="text-sm text-slate-400">{title}</p><p className="mt-2 truncate text-3xl font-bold">{value}</p><p className="mt-2 text-sm text-slate-500">{detail}</p>{progress !== undefined && <div className="mt-4 h-2 rounded-full bg-slate-800"><div className="h-full rounded-full bg-blue-500" style={{ width: `${progress}%` }} /></div>}</div>;
+}
+
+function ChartCard({ title, empty, children }: { title: string; empty: boolean; children: React.ReactNode }) {
+  return <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6"><h2 className="text-xl font-bold">{title}</h2>{empty ? <div className="flex h-72 items-center justify-center text-slate-400">No data available yet.</div> : <div className="mt-4">{children}</div>}</div>;
+}
+
+function SkillList({ title, items, tone }: { title: string; items: { skill: string; level: number }[]; tone: "green" | "yellow" }) {
+  return <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6"><h2 className="text-xl font-bold">{title}</h2><div className="mt-5 space-y-3">{items.length === 0 ? <p className="text-slate-400">No data available yet.</p> : items.map((item) => <div key={item.skill} className="flex items-center justify-between rounded-lg border border-slate-800 p-3"><span>{item.skill}</span><span className={`rounded-full px-3 py-1 text-sm ${tone === "green" ? "bg-green-500/10 text-green-300" : "bg-yellow-500/10 text-yellow-300"}`}>{levelName(item.level)}</span></div>)}</div></div>;
 }

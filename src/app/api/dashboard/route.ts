@@ -19,10 +19,9 @@ export async function GET() {
         student: {
           include: {
             skills: { include: { skill: true } },
-            progress: true,
             predictions: {
               orderBy: { createdAt: "desc" },
-              take: 1,
+              take: 10,
               include: { career: true },
             },
           },
@@ -38,6 +37,16 @@ export async function GET() {
     }
 
     const student = user.student;
+    const assessments = await db.assessment.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+    });
+    const progressRecords = await db.progress.findMany({
+      where: { studentId: student.id },
+      include: { resource: true },
+    });
+
     const profileChecks = [
       Boolean(user.name),
       Boolean(student.matricNumber),
@@ -53,99 +62,111 @@ export async function GET() {
     const profileCompletion = Math.round(
       (profileChecks.filter(Boolean).length / profileChecks.length) * 100
     );
-    const assessments = await db.assessment.findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-      take: 1,
-      include: { questionAnswers: true },
-    });
-    const latestAssessment = assessments[0];
-    const assessment = latestAssessment
-      ? {
-          id: latestAssessment.id,
-          score: latestAssessment.score,
-          correctAnswers: latestAssessment.questionAnswers.filter(
-            (answer) => answer.isCorrect
-          ).length,
-          totalQuestions: latestAssessment.questionAnswers.length,
-          createdAt: latestAssessment.createdAt,
-        }
-      : null;
 
-    const latestPrediction = student.predictions[0];
-    const career = latestPrediction
-      ? {
-          id: latestPrediction.career.id,
-          name: latestPrediction.career.title,
-          description: latestPrediction.career.description,
-          demandLevel: latestPrediction.career.demandLevel,
-          confidence: Math.round(
-            latestPrediction.confidenceScore <= 1
-              ? latestPrediction.confidenceScore * 100
-              : latestPrediction.confidenceScore
-          ),
-          createdAt: latestPrediction.createdAt,
-        }
-      : null;
+    const assessmentScores = assessments
+      .map((assessment) => ({
+        id: assessment.id,
+        score: assessment.score,
+        date: assessment.createdAt.toISOString().split("T")[0],
+      }))
+      .reverse();
+    const latestAssessment = assessments[0] ?? null;
+    const averageAssessmentScore = assessments.length
+      ? Math.round(
+          assessments.reduce((sum, assessment) => sum + assessment.score, 0) /
+            assessments.length
+        )
+      : 0;
 
-    const totalResources = student.progress.length;
-    const completedResources = student.progress.filter(
-      (item) => item.completionPercentage === 100
+    const skills = student.skills
+      .map((studentSkill) => ({
+        skill: studentSkill.skill.name,
+        level: studentSkill.proficiencyLevel,
+        category: studentSkill.skill.category,
+      }))
+      .sort((a, b) => b.level - a.level);
+    const strongestSkills = skills.filter((skill) => skill.level >= 2).slice(0, 5);
+    const improvementSkills = skills.filter((skill) => skill.level < 2).slice(0, 5);
+
+    const totalResources = progressRecords.length;
+    const completedResources = progressRecords.filter(
+      (item) => item.status === "COMPLETED"
     ).length;
-    const inProgressResources = student.progress.filter(
-      (item) => item.completionPercentage > 0 && item.completionPercentage < 100
+    const inProgressResources = progressRecords.filter(
+      (item) => item.status === "IN_PROGRESS"
     ).length;
     const learningProgress = totalResources
       ? Math.round(
-          student.progress.reduce(
-            (total, item) => total + item.completionPercentage,
+          progressRecords.reduce(
+            (sum, item) => sum + item.completionPercentage,
             0
           ) / totalResources
         )
       : 0;
 
+    const careerHistory = student.predictions.map((prediction) => ({
+      id: prediction.id,
+      career: prediction.career.title,
+      confidence: Math.round(
+        prediction.confidenceScore <= 1
+          ? prediction.confidenceScore * 100
+          : prediction.confidenceScore
+      ),
+      careerId: prediction.careerId,
+      date: prediction.createdAt.toISOString().split("T")[0],
+    }));
+    const latestPrediction = careerHistory[0] ?? null;
+
     let nextAction = {
-      title: "Complete Your Profile",
-      description: "Complete your student profile to unlock better recommendations.",
+      title: "Complete your profile",
+      description: "Add your academic information, interests and skills.",
       href: "/profile",
     };
     if (profileCompletion >= 70 && !latestAssessment) {
       nextAction = {
-        title: "Take Your Technical Assessment",
-        description: "Evaluate your technical skills to improve your career recommendation.",
+        title: "Take the career assessment",
+        description: "Measure your current technical skill levels.",
         href: "/assessment",
       };
-    } else if (latestAssessment && !latestPrediction) {
+    } else if (profileCompletion >= 70 && latestAssessment && !latestPrediction) {
       nextAction = {
-        title: "Get Your AI Career Recommendation",
-        description: "Use your assessment results to discover suitable career paths.",
+        title: "Get your AI career recommendation",
+        description: "Use your profile and assessment results to discover suitable career paths.",
         href: "/ai-result",
+      };
+    } else if (latestPrediction && learningProgress < 100) {
+      nextAction = {
+        title: "Continue your learning roadmap",
+        description: "Work on the skills required for your recommended career.",
+        href: "/roadmap",
       };
     }
 
     return NextResponse.json({
       user: { name: user.name, email: user.email, role: user.role },
-      profile: {
-        completion: profileCompletion,
-        cgpa: student.cgpa,
-        department: student.department,
-        level: student.level,
-        projects: student.projects,
-        certifications: student.certifications,
+      profileCompletion,
+      latestAssessment: latestAssessment
+        ? {
+            score: latestAssessment.score,
+            date: latestAssessment.createdAt.toISOString().split("T")[0],
+          }
+        : null,
+      assessmentStats: {
+        total: assessments.length,
+        averageScore: averageAssessmentScore,
+        latestScore: latestAssessment?.score ?? null,
       },
-      skills: student.skills.map((item) => ({
-        id: item.skill.id,
-        name: item.skill.name,
-        category: item.skill.category,
-        proficiency: item.proficiencyLevel,
-      })),
-      assessment,
-      career,
+      assessmentScores,
+      latestPrediction,
+      careerHistory,
+      skills,
+      strongestSkills,
+      improvementSkills,
       learning: {
-        progress: learningProgress,
         totalResources,
         completedResources,
         inProgressResources,
+        progress: learningProgress,
       },
       nextAction,
     });
