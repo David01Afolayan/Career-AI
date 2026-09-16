@@ -96,6 +96,8 @@ def main() -> None:
     df = pd.read_csv(DATASET_PATH)
     if len(df) == 0:
         raise ValueError("Dataset contains no participant responses.")
+    MODEL_DIR.mkdir(parents=True, exist_ok=True)
+    EVALUATION_DIR.mkdir(parents=True, exist_ok=True)
 
     X = df[NUMERIC_FEATURES].copy()
     encoder = LabelEncoder()
@@ -110,7 +112,6 @@ def main() -> None:
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
     models = build_models()
     comparison = []
-    trained_models = {}
     reports = {}
 
     for model_name, model in models.items():
@@ -132,14 +133,16 @@ def main() -> None:
             y_test, predictions, target_names=encoder.classes_, zero_division=0
         )
         save_confusion_matrix(model_name, y_test, predictions, encoder.classes_)
-        trained_models[model_name] = model
-
     results = pd.DataFrame(comparison).sort_values("CV Macro F1 Mean", ascending=False)
     best_model_name = results.iloc[0]["Model"]
-    MODEL_DIR.mkdir(parents=True, exist_ok=True)
-    EVALUATION_DIR.mkdir(parents=True, exist_ok=True)
-    joblib.dump(trained_models[best_model_name], MODEL_DIR / "career_model.pkl")
+
+    print(f"\nSelected model: {best_model_name}")
+    print("Retraining selected model on the complete dataset...")
+    final_model = build_models()[best_model_name]
+    final_model.fit(X, y)
+    joblib.dump(final_model, MODEL_DIR / "career_model.pkl")
     joblib.dump(encoder, MODEL_DIR / "career_encoder.pkl")
+    print("[OK] Production model trained on complete dataset.")
     results.to_csv(EVALUATION_DIR / "final_model_comparison.csv", index=False)
 
     metadata = {
@@ -156,14 +159,36 @@ def main() -> None:
         "test_split": 0.20,
         "random_state": 42,
         "development_only": False,
+        "model_status": "final_research_model",
+        "training_strategy": (
+            "Model selected using cross-validation on training data and "
+            "retrained on complete validated dataset after final evaluation."
+        ),
     }
     (MODEL_DIR / "model_metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
     with (EVALUATION_DIR / "classification_reports.txt").open("w", encoding="utf-8") as file:
         for model_name, report in reports.items():
             file.write(f"\n{'=' * 70}\n{model_name}\n{'=' * 70}\n{report}")
 
+    research_results = {
+        "dataset_rows": int(len(df)),
+        "training_rows": int(len(X_train)),
+        "testing_rows": int(len(X_test)),
+        "test_size": 0.20,
+        "random_state": 42,
+        "cv_folds": 5,
+        "selection_metric": "CV Macro F1",
+        "selected_model": best_model_name,
+        "models": comparison,
+        "classes": encoder.classes_.tolist(),
+    }
+    (EVALUATION_DIR / "research_results.json").write_text(
+        json.dumps(research_results, indent=2),
+        encoding="utf-8",
+    )
+
     print(results.to_string(index=False))
-    print(f"\nSelected model: {best_model_name}")
+    print("[OK] Evaluation files saved.")
 
 
 if __name__ == "__main__":

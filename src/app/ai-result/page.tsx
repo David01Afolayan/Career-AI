@@ -134,6 +134,19 @@ export default function AiResultPage() {
               )}
             </section>
 
+            <section className="rounded-xl border border-blue-300/20 bg-blue-500/10 p-5">
+              <h3 className="font-semibold text-blue-200">
+                About this recommendation
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-blue-100/80">
+                CareerAI provides an AI-assisted career recommendation based on
+                the information in your profile. It supports career
+                exploration and does not determine your career choice. Career
+                readiness is evaluated separately using the selected career&apos;s
+                skill requirements.
+              </p>
+            </section>
+
             <section className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
               <h2 className="text-xl font-semibold">Other career matches</h2>
               <div className="mt-5 space-y-4">

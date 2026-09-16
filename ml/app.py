@@ -1,5 +1,7 @@
 import os
 import secrets
+import json
+from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.security import APIKeyHeader
@@ -19,6 +21,8 @@ app = FastAPI(
     description="Machine learning service for CareerAI",
     version="1.0.0",
 )
+
+BASE_DIR = Path(__file__).resolve().parent
 
 ML_API_KEY = os.getenv("ML_API_KEY")
 api_key_header = APIKeyHeader(name="x-ml-api-key", auto_error=False)
@@ -45,13 +49,20 @@ def verify_ml_api_key(
 # =========================
 
 try:
-    model = joblib.load("models/career_model.pkl")
-    encoder = joblib.load("models/career_encoder.pkl")
+    model = joblib.load(BASE_DIR / "models" / "career_model.pkl")
+    encoder = joblib.load(BASE_DIR / "models" / "career_encoder.pkl")
 
 except Exception as error:
     print("Model loading error:", error)
     model = None
     encoder = None
+
+MODEL_METADATA_PATH = BASE_DIR / "models" / "model_metadata.json"
+if MODEL_METADATA_PATH.exists():
+    with MODEL_METADATA_PATH.open("r", encoding="utf-8") as file:
+        model_metadata = json.load(file)
+else:
+    model_metadata = {}
 
 
 # =========================
@@ -104,7 +115,25 @@ def home():
 
 @app.get("/health")
 def health():
-    return {"status": "healthy"}
+    return {
+        "status": "healthy",
+        "model": model_metadata.get("selected_model", "unknown"),
+        "modelStatus": model_metadata.get("model_status", "unknown"),
+    }
+
+
+@app.get("/model-info")
+def model_info():
+    return {
+        "model": model_metadata.get("selected_model", "unknown"),
+        "status": model_metadata.get("model_status", "unknown"),
+        "target": model_metadata.get("target", "Recommended_Career"),
+        "features": model_metadata.get("features", NUMERIC_FEATURES),
+        "excludedFeatures": model_metadata.get(
+            "excluded_features", ["Interest"]
+        ),
+        "datasetRows": model_metadata.get("dataset_rows"),
+    }
 
 
 # =========================
