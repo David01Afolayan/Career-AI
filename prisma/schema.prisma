@@ -35,6 +35,14 @@ model Career {
   description    String
   requiredSkills String
   salaryRange    String?
+  predictions    Prediction[]
+}
+
+model Prediction {
+  id        Int      @id @default(autoincrement())
+  careerId  Int
+  career    Career   @relation(fields: [careerId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 }
 
 model Skill {

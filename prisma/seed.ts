@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const db = new PrismaClient();
 
@@ -299,6 +300,28 @@ async function main() {
   console.log(`✅ ${resources.length} learning resources created.`);
 
   console.log(`Seeded ${careers.length} career records.`);
+
+  const adminPassword = await bcrypt.hash(
+    "Admin@12345",
+    10
+  );
+
+  const admin = await db.user.upsert({
+    where: {
+      email: "admin@careerai.com",
+    },
+    update: {
+      role: "ADMIN",
+    },
+    create: {
+      name: "CareerAI Administrator",
+      email: "admin@careerai.com",
+      passwordHash: adminPassword,
+      role: "ADMIN",
+    },
+  });
+
+  console.log(`✅ Admin account ready: ${admin.email}`);
 }
 
 main()
