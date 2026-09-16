@@ -6,7 +6,7 @@ import joblib
 
 app = FastAPI(
     title="CareerAI ML API",
-    description="AI Career Recommendation API",
+    description="Machine learning service for CareerAI",
     version="1.0.0",
 )
 
@@ -16,13 +16,8 @@ app = FastAPI(
 # =========================
 
 try:
-    model = joblib.load(
-        "models/career_model.pkl"
-    )
-
-    encoder = joblib.load(
-        "models/career_encoder.pkl"
-    )
+    model = joblib.load("models/career_model.pkl")
+    encoder = joblib.load("models/career_encoder.pkl")
 
 except Exception as error:
     print("Model loading error:", error)
@@ -64,8 +59,6 @@ FEATURE_COLUMNS = [
 
 class StudentProfile(BaseModel):
 
-    CGPA: float = 0
-
     HTML_CSS: int = 0
     JavaScript: int = 0
     React: int = 0
@@ -88,6 +81,8 @@ class StudentProfile(BaseModel):
 
     Interest: str = ""
 
+    CGPA: float = 0
+
 
 # =========================
 # Home endpoint
@@ -98,8 +93,12 @@ class StudentProfile(BaseModel):
 def home():
     return {
         "message": "CareerAI ML API is running",
-        "status": "online",
     }
+
+
+@app.get("/health")
+def health():
+    return {"status": "healthy"}
 
 
 # =========================
@@ -120,8 +119,6 @@ def predict(profile: StudentProfile):
 
         data = profile.model_dump()
 
-        # Remove text field because
-        # current model does not use Interest.
         data.pop("Interest", None)
 
         # Ensure correct feature order
@@ -149,19 +146,19 @@ def predict(profile: StudentProfile):
             list(range(len(probabilities)))
         )
 
+        probability_map = {}
         recommendations = []
 
         for career, probability in zip(
             careers,
             probabilities
         ):
+            confidence_value = round(float(probability), 4)
+            probability_map[career] = confidence_value
             recommendations.append(
                 {
                     "career": career,
-                    "confidence": round(
-                        float(probability) * 100,
-                        2,
-                    ),
+                    "confidence": round(float(probability) * 100, 2),
                 }
             )
 
@@ -171,11 +168,10 @@ def predict(profile: StudentProfile):
         )
 
         return {
+            "predictedCareer": predicted_career,
             "predicted_career": predicted_career,
-            "confidence": round(
-                float(probabilities[prediction]) * 100,
-                2,
-            ),
+            "confidence": round(float(probabilities[prediction]), 4),
+            "probabilities": probability_map,
             "recommendations": recommendations,
         }
 

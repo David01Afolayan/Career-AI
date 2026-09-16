@@ -69,10 +69,13 @@ model Career {
 }
 
 model Prediction {
-  id        Int      @id @default(autoincrement())
-  careerId  Int
-  career    Career   @relation(fields: [careerId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
+  id              Int      @id @default(autoincrement())
+  studentId       Int
+  careerId        Int
+  confidenceScore Float
+  student         Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  career          Career   @relation(fields: [careerId], references: [id], onDelete: Cascade)
+  createdAt       DateTime @default(now())
 }
 
 model Skill {
@@ -115,6 +118,7 @@ model Student {
   user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   progress       Progress[]
   skills         StudentSkill[]
+  predictions    Prediction[]
   matricNumber   String?
   department     String?
   level          Int?

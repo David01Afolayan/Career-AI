@@ -20,6 +20,11 @@ export async function GET() {
           include: {
             skills: { include: { skill: true } },
             progress: true,
+            predictions: {
+              orderBy: { createdAt: "desc" },
+              take: 1,
+              include: { career: true },
+            },
           },
         },
       },
@@ -67,6 +72,22 @@ export async function GET() {
         }
       : null;
 
+    const latestPrediction = student.predictions[0];
+    const career = latestPrediction
+      ? {
+          id: latestPrediction.career.id,
+          name: latestPrediction.career.title,
+          description: latestPrediction.career.description,
+          demandLevel: latestPrediction.career.demandLevel,
+          confidence: Math.round(
+            latestPrediction.confidenceScore <= 1
+              ? latestPrediction.confidenceScore * 100
+              : latestPrediction.confidenceScore
+          ),
+          createdAt: latestPrediction.createdAt,
+        }
+      : null;
+
     const totalResources = student.progress.length;
     const completedResources = student.progress.filter(
       (item) => item.completionPercentage === 100
@@ -94,7 +115,7 @@ export async function GET() {
         description: "Evaluate your technical skills to improve your career recommendation.",
         href: "/assessment",
       };
-    } else if (latestAssessment) {
+    } else if (latestAssessment && !latestPrediction) {
       nextAction = {
         title: "Get Your AI Career Recommendation",
         description: "Use your assessment results to discover suitable career paths.",
@@ -119,7 +140,7 @@ export async function GET() {
         proficiency: item.proficiencyLevel,
       })),
       assessment,
-      career: null,
+      career,
       learning: {
         progress: learningProgress,
         totalResources,

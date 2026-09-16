@@ -4,58 +4,61 @@ import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-const ML_API_URL =
-  process.env.ML_API_URL || "http://127.0.0.1:8000";
-
-const featureDefaults: Record<string, number> = {
-  CGPA: 0,
-  HTML_CSS: 0,
-  JavaScript: 0,
-  React: 0,
-  NextJS: 0,
-  NodeJS: 0,
-  Python: 0,
-  Java: 0,
-  Cpp: 0,
-  SQL: 0,
-  Data_Analysis: 0,
-  Machine_Learning: 0,
-  Networking: 0,
-  Cybersecurity: 0,
-  Git_GitHub: 0,
-  Communication: 0,
-  Problem_Solving: 0,
-  Projects: 0,
-  Certifications: 0,
+const skillMap: Record<string, string> = {
+  "HTML & CSS": "HTML_CSS",
+  JavaScript: "JavaScript",
+  React: "React",
+  "Next.js": "NextJS",
+  "Node.js": "NodeJS",
+  Python: "Python",
+  Java: "Java",
+  "C++": "Cpp",
+  SQL: "SQL",
+  "Data Analysis": "Data_Analysis",
+  "Machine Learning": "Machine_Learning",
+  Networking: "Networking",
+  Cybersecurity: "Cybersecurity",
+  "Git & GitHub": "Git_GitHub",
+  Communication: "Communication",
+  "Problem Solving": "Problem_Solving",
 };
 
-export async function POST(request: Request) {
-  const session = await auth();
+const featureNames = [
+  "HTML_CSS",
+  "JavaScript",
+  "React",
+  "NextJS",
+  "NodeJS",
+  "Python",
+  "Java",
+  "Cpp",
+  "SQL",
+  "Data_Analysis",
+  "Machine_Learning",
+  "Networking",
+  "Cybersecurity",
+  "Git_GitHub",
+  "Communication",
+  "Problem_Solving",
+] as const;
 
-  if (!session?.user?.id) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401 }
-    );
-  }
-
+export async function POST() {
   try {
+    const session = await auth();
+    const userId = Number(session?.user?.id);
+
+    if (!session?.user?.id || !Number.isInteger(userId)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const student = await db.student.findUnique({
-      where: {
-        userId: Number(session.user.id),
-      },
-      include: {
-        skills: {
-          include: {
-            skill: true,
-          },
-        },
-      },
+      where: { userId },
+      include: { skills: { include: { skill: true } } },
     });
 
     if (!student) {
       return NextResponse.json(
-        { error: "Student profile not found" },
+        { error: "Student profile not found." },
         { status: 404 }
       );
     }
@@ -76,76 +79,81 @@ export async function POST(request: Request) {
       );
     }
 
-    const body: unknown = await request.json().catch(() => ({}));
-    const input =
-      body && typeof body === "object" && !Array.isArray(body)
-        ? (body as Record<string, unknown>)
-        : {};
-
-    const profile: Record<string, number | string> = {
-      ...featureDefaults,
-      Interest: typeof input.Interest === "string" ? input.Interest : "",
+    const features: Record<string, number> = {
+      CGPA: student.cgpa,
       Projects: student.projects,
       Certifications: student.certifications,
     };
-
-    for (const feature of Object.keys(featureDefaults)) {
-      const value = Number(input[feature]);
-
-      if (Number.isFinite(value)) {
-        profile[feature] = value;
-      }
+    for (const featureName of featureNames) features[featureName] = 0;
+    for (const studentSkill of student.skills) {
+      const feature = skillMap[studentSkill.skill.name];
+      if (feature) features[feature] = studentSkill.proficiencyLevel;
     }
 
-    const response = await fetch(
-      `${ML_API_URL.replace(/\/$/, "")}/predict`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(profile),
-        cache: "no-store",
-      }
-    );
+    const mlApiUrl = (process.env.ML_API_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
+    const mlResponse = await fetch(`${mlApiUrl}/predict`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...features, Interest: student.interests }),
+      cache: "no-store",
+    });
+    const result = await mlResponse.json().catch(() => null);
 
-    const prediction = await response.json().catch(() => null);
-
-    if (!response.ok) {
-      console.error("ML API error:", prediction);
-
+    if (!mlResponse.ok) {
+      console.error("ML service error:", result);
       return NextResponse.json(
-        { error: "The AI service could not process the prediction." },
+        { error: result?.detail || result?.error || "The ML service could not generate a recommendation." },
         { status: 503 }
       );
     }
 
     const predictedCareerName =
-      prediction &&
-      typeof prediction === "object" &&
-      "predicted_career" in prediction &&
-      typeof prediction.predicted_career === "string"
-        ? prediction.predicted_career
-        : null;
-    const predictedCareer = predictedCareerName
-      ? await db.career.findFirst({
-          where: { title: predictedCareerName },
-          select: { id: true },
-        })
+      typeof result?.predictedCareer === "string"
+        ? result.predictedCareer
+        : typeof result?.predicted_career === "string"
+          ? result.predicted_career
+          : null;
+    const career = predictedCareerName
+      ? await db.career.findFirst({ where: { title: predictedCareerName } })
       : null;
+
+    if (!career) {
+      return NextResponse.json(
+        { error: "The predicted career does not exist in the CareerAI database." },
+        { status: 500 }
+      );
+    }
+
+    const confidence = Number(result.confidence);
+    const confidenceScore = Number.isFinite(confidence) ? confidence : 0;
+    const confidencePercentage =
+      confidenceScore <= 1 ? confidenceScore * 100 : confidenceScore;
+    const prediction = await db.prediction.create({
+      data: {
+        studentId: student.id,
+        careerId: career.id,
+        confidenceScore,
+      },
+    });
+
+    const predictionData = {
+      predicted_career: career.title,
+      predictedCareer: career.title,
+      careerId: career.id,
+      confidence: confidencePercentage,
+      probabilities: result.probabilities || result.recommendations || {},
+    };
 
     return NextResponse.json({
       success: true,
-      prediction:
-        prediction && typeof prediction === "object"
-          ? { ...prediction, careerId: predictedCareer?.id ?? null }
-          : prediction,
+      predictionId: prediction.id,
+      ...predictionData,
+      prediction: predictionData,
     });
   } catch (error) {
     console.error("ML prediction error:", error);
-
     return NextResponse.json(
-      { error: "The AI service is unavailable." },
+      { error: "Unable to generate AI career recommendation." },
       { status: 503 }
     );
   }
