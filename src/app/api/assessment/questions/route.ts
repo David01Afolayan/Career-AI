@@ -19,10 +19,13 @@ export async function GET() {
         difficulty: true,
         skill: { select: { id: true, name: true, category: true } },
       },
-      orderBy: { createdAt: "asc" },
     });
 
-    return NextResponse.json(questions);
+    const shuffled = [...questions]
+      .sort(() => Math.random() - 0.5)
+      .slice(0, 30);
+
+    return NextResponse.json(shuffled);
   } catch (error) {
     console.error("Assessment questions error:", error);
     return NextResponse.json(
