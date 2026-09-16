@@ -1,7 +1,9 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
+import { headers } from "next/headers";
 import { prisma as db } from "@/lib/db";
+import { checkRateLimit } from "@/lib/security";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -22,18 +24,24 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null;
         }
 
-        const user = await db.user.findUnique({
-          where: {
-            email: String(credentials.email),
-          },
-        });
+        const email = String(credentials.email).trim().toLowerCase();
+        const password = String(credentials.password);
+        if (!email || password.length < 8 || password.length > 72) return null;
+
+        const requestHeaders = await headers();
+        const ip = requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+          requestHeaders.get("x-real-ip") || "unknown";
+        const rateLimit = await checkRateLimit(`login:${email}:${ip}`, 5, 15 * 60 * 1000);
+        if (!rateLimit.allowed) return null;
+
+        const user = await db.user.findUnique({ where: { email } });
 
         if (!user) {
           return null;
         }
 
         const passwordCorrect = await bcrypt.compare(
-          String(credentials.password),
+          password,
           user.passwordHash
         );
 
@@ -53,7 +61,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
   session: {
     strategy: "jwt",
+    maxAge: 7 * 24 * 60 * 60,
   },
+  jwt: { maxAge: 7 * 24 * 60 * 60 },
 
   callbacks: {
     async jwt({ token, user }) {

@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-
-type SubmittedAnswer = {
-  questionId: string;
-  selectedAnswer: number;
-};
+import { assessmentSubmitSchema } from "@/lib/validation";
+import { checkRateLimit, rateLimitResponse } from "@/lib/security";
 
 export async function POST(request: Request) {
   try {
@@ -14,19 +11,24 @@ export async function POST(request: Request) {
     if (!session?.user?.id || !Number.isInteger(userId)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const rateLimit = await checkRateLimit(`assessment-submit:${userId}`, 5, 10 * 60 * 1000);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Too many assessment submissions. Please wait before trying again." },
+        { status: 429, headers: rateLimitResponse(rateLimit.resetAt) }
+      );
+    }
 
     const student = await db.student.findUnique({ where: { userId } });
     if (!student) {
       return NextResponse.json({ error: "Student profile not found" }, { status: 404 });
     }
 
-    const body = await request.json();
-    const answers: SubmittedAnswer[] = Array.isArray(body?.answers)
-      ? body.answers
-      : [];
-    if (answers.length === 0) {
-      return NextResponse.json({ error: "No answers were submitted" }, { status: 400 });
-    }
+    let body: unknown;
+    try { body = await request.json(); } catch { return NextResponse.json({ error: "Invalid request body." }, { status: 400 }); }
+    const parsed = assessmentSubmitSchema.safeParse(body);
+    if (!parsed.success) return NextResponse.json({ error: "Invalid assessment submission." }, { status: 400 });
+    const { answers } = parsed.data;
 
     const questionIds = answers.map((answer) => answer.questionId);
     const uniqueQuestionIds = new Set(questionIds);

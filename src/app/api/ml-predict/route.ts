@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { checkRateLimit, rateLimitResponse } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,13 @@ export async function POST() {
 
     if (!session?.user?.id || !Number.isInteger(userId)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const rateLimit = await checkRateLimit(`ml-predict:${userId}`, 10, 10 * 60 * 1000);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Too many AI recommendation requests. Please try again later." },
+        { status: 429, headers: rateLimitResponse(rateLimit.resetAt) }
+      );
     }
 
     const student = await db.student.findUnique({
@@ -90,20 +98,25 @@ export async function POST() {
     }
 
     const mlApiUrl = (process.env.ML_API_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
-    const mlResponse = await fetch(`${mlApiUrl}/predict`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(features),
-      cache: "no-store",
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10_000);
+    let mlResponse: Response;
+    try {
+      mlResponse = await fetch(`${mlApiUrl}/predict`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(features),
+        cache: "no-store",
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
     const result = await mlResponse.json().catch(() => null);
 
     if (!mlResponse.ok) {
-      console.error("ML service error:", result);
-      return NextResponse.json(
-        { error: result?.detail || result?.error || "The ML service could not generate a recommendation." },
-        { status: 503 }
-      );
+      console.error("ML service returned:", mlResponse.status, result);
+      return NextResponse.json({ error: "The AI recommendation service is temporarily unavailable." }, { status: 503 });
     }
 
     const predictedCareerName =

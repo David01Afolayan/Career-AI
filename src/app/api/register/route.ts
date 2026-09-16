@@ -1,80 +1,54 @@
 import { NextResponse } from "next/server";
-import { Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
-
-import { prisma as db } from "@/lib/db";
+import { db } from "@/lib/db";
+import { registrationSchema } from "@/lib/validation";
+import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/security";
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { name, email, password } = body;
-
-    if (!name || !email || !password) {
+    const rateLimit = await checkRateLimit(`register:${getClientIp(request)}`, 5, 15 * 60 * 1000);
+    if (!rateLimit.allowed) {
       return NextResponse.json(
-        { error: "Name, email and password are required." },
-        { status: 400 },
+        { error: "Too many registration attempts. Please try again later." },
+        { status: 429, headers: rateLimitResponse(rateLimit.resetAt) }
       );
     }
 
-    if (typeof password !== "string" || password.length < 6) {
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+    }
+    const parsed = registrationSchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: "Password must be at least 6 characters." },
-        { status: 400 },
+        { error: "Please correct the submitted fields.", fields: parsed.error.flatten().fieldErrors },
+        { status: 400 }
       );
     }
 
-    const normalizedEmail = String(email).trim().toLowerCase();
-    const existingUser = await db.user.findUnique({
-      where: { email: normalizedEmail },
-    });
-
-    if (existingUser) {
-      return NextResponse.json(
-        { error: "An account with this email already exists." },
-        { status: 409 },
-      );
+    const { name, email, password, matricNumber, department, level } = parsed.data;
+    if (await db.user.findUnique({ where: { email } })) {
+      return NextResponse.json({ error: "Unable to create an account with these details." }, { status: 400 });
+    }
+    if (matricNumber && await db.student.findFirst({ where: { matricNumber } })) {
+      return NextResponse.json({ error: "Unable to create an account with these details." }, { status: 400 });
     }
 
-    const passwordHash = await bcrypt.hash(password, 12);
     const user = await db.user.create({
       data: {
-        name: String(name).trim(),
-        email: normalizedEmail,
-        passwordHash,
+        name,
+        email,
+        passwordHash: await bcrypt.hash(password, 12),
         role: "STUDENT",
-        student: {
-          create: {},
-        },
+        student: { create: { matricNumber: matricNumber || null, department: department || "Computer Science", level: level ?? 400 } },
       },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-      },
+      select: { id: true, name: true, email: true },
     });
-
-    return NextResponse.json(
-      {
-        message: "Account created successfully.",
-        user,
-      },
-      { status: 201 },
-    );
+    return NextResponse.json({ success: true, message: "Account created successfully.", userId: user.id }, { status: 201 });
   } catch (error) {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      error.code === "P2002"
-    ) {
-      return NextResponse.json(
-        { error: "An account with this email already exists." },
-        { status: 409 },
-      );
-    }
-
     console.error("Registration error:", error);
-    return NextResponse.json(
-      { error: "Something went wrong while creating your account." },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Unable to complete registration right now." }, { status: 500 });
   }
 }

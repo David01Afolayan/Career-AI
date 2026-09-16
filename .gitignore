@@ -3,9 +3,11 @@ node_modules
 out
 .env.local
 .env
+.env.*.local
 ml/venv/
 __pycache__/
 *.py[cod]
+*.log
 npm-debug.log*
 .DS_Store
 

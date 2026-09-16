@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { profileSchema } from "@/lib/validation";
+import { checkRateLimit, rateLimitResponse } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
@@ -64,40 +66,13 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const {
-      name,
-      matricNumber,
-      department,
-      level,
-      cgpa,
-      interests,
-      experience,
-      projects,
-      certifications,
-    } = body;
-
-    if (!name || !department) {
-      return NextResponse.json(
-        { error: "Name and department are required." },
-        { status: 400 }
-      );
-    }
-
-    const numericCgpa =
-      cgpa !== null && cgpa !== undefined && cgpa !== ""
-        ? Number(cgpa)
-        : null;
-
-    if (
-      numericCgpa !== null &&
-      (!Number.isFinite(numericCgpa) || numericCgpa < 0 || numericCgpa > 5)
-    ) {
-      return NextResponse.json(
-        { error: "CGPA must be between 0 and 5." },
-        { status: 400 }
-      );
-    }
+    const rateLimit = await checkRateLimit(`profile:${session.user.id}`, 30, 10 * 60 * 1000);
+    if (!rateLimit.allowed) return NextResponse.json({ error: "Too many profile updates. Please try again later." }, { status: 429, headers: rateLimitResponse(rateLimit.resetAt) });
+    let body: unknown;
+    try { body = await request.json(); } catch { return NextResponse.json({ error: "Invalid request body." }, { status: 400 }); }
+    const parsed = profileSchema.safeParse(body);
+    if (!parsed.success) return NextResponse.json({ error: "Please correct the submitted profile information.", fields: parsed.error.flatten().fieldErrors }, { status: 400 });
+    const data = parsed.data;
 
     const userId = Number(session.user.id);
 
@@ -107,53 +82,31 @@ export async function PUT(request: Request) {
 
     const user = await db.user.update({
       where: { id: userId },
-      data: { name: String(name).trim() },
+      data: { name: data.name },
     });
 
     const student = await db.student.upsert({
       where: { userId },
       create: {
         userId,
-        matricNumber: matricNumber ? String(matricNumber).trim() : null,
-        department: String(department).trim(),
-        level:
-          level !== null && level !== undefined && level !== ""
-            ? Number(level)
-            : null,
-        cgpa: numericCgpa,
-        interests: interests ? String(interests).trim() : null,
-        experience: experience ? String(experience).trim() : null,
-        projects:
-          projects !== null && projects !== undefined && projects !== ""
-            ? Number(projects)
-            : 0,
-        certifications:
-          certifications !== null &&
-          certifications !== undefined &&
-          certifications !== ""
-            ? Number(certifications)
-            : 0,
+        matricNumber: data.matricNumber,
+        department: data.department,
+        level: data.level,
+        cgpa: data.cgpa,
+        interests: data.interests,
+        experience: data.experience,
+        projects: data.projects ?? 0,
+        certifications: data.certifications ?? 0,
       },
       update: {
-        matricNumber: matricNumber ? String(matricNumber).trim() : null,
-        department: String(department).trim(),
-        level:
-          level !== null && level !== undefined && level !== ""
-            ? Number(level)
-            : null,
-        cgpa: numericCgpa,
-        interests: interests ? String(interests).trim() : null,
-        experience: experience ? String(experience).trim() : null,
-        projects:
-          projects !== null && projects !== undefined && projects !== ""
-            ? Number(projects)
-            : 0,
-        certifications:
-          certifications !== null &&
-          certifications !== undefined &&
-          certifications !== ""
-            ? Number(certifications)
-            : 0,
+        matricNumber: data.matricNumber,
+        department: data.department,
+        level: data.level,
+        cgpa: data.cgpa,
+        interests: data.interests,
+        experience: data.experience,
+        projects: data.projects ?? 0,
+        certifications: data.certifications ?? 0,
       },
     });
 
