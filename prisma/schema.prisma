@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("STUDENT")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  student      Student?
+}
+
+model Assessment {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  score           Int
+  strengths       String?
+  interests       String?
+  recommendations String?
+  createdAt       DateTime @default(now())
+}
+
+model Career {
+  id             Int     @id @default(autoincrement())
+  title          String
+  category       String
+  description    String
+  requiredSkills String
+  salaryRange    String?
+}
+
+model Skill {
+  id                Int                @id @default(autoincrement())
+  name              String             @unique
+  learningResources LearningResource[]
+  students          StudentSkill[]
+}
+
+model LearningResource {
+  id           String @id
+  skillId      Int
+  skill        Skill  @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  title        String
+  description  String
+  url          String
+  resourceType String
+  difficulty   String
+  progress     Progress[]
+}
+
+model Student {
+  id             Int        @id @default(autoincrement())
+  userId         Int        @unique
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  progress       Progress[]
+  skills         StudentSkill[]
+  matricNumber   String?
+  department     String?
+  level          Int?
+  cgpa           Float?
+  interests      String?
+  experience     String?
+  projects       Int        @default(0)
+  certifications Int        @default(0)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+}
+
+model StudentSkill {
+  studentId Int
+  skillId   Int
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  skill     Skill   @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([studentId, skillId])
+}
+
+enum ProgressStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+model Progress {
+  id                   Int            @id @default(autoincrement())
+  studentId            Int
+  resourceId           String
+  status               ProgressStatus @default(NOT_STARTED)
+  completionPercentage Int            @default(0)
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  student              Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  resource             LearningResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, resourceId])
+}
