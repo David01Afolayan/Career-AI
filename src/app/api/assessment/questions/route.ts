@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 const QUESTIONS_PER_SKILL = 2;
 
 function shuffle<T>(array: T[]): T[] {
