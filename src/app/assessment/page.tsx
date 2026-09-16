@@ -29,7 +29,7 @@ export default function AssessmentPage() {
           setError(data.error || "Unable to load assessment.");
           return;
         }
-        setQuestions(Array.isArray(data) ? data : data.questions || []);
+        setQuestions(data.questions || []);
       } catch {
         setError("Unable to connect to the server.");
       } finally {

@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
+const QUESTIONS_PER_SKILL = 2;
+
 export async function GET() {
   try {
     const session = await auth();
@@ -21,11 +23,37 @@ export async function GET() {
       },
     });
 
-    const shuffled = [...questions]
-      .sort(() => Math.random() - 0.5)
-      .slice(0, 30);
+    const questionsBySkill = new Map<number, typeof questions>();
+    for (const question of questions) {
+      const skillId = question.skill.id;
+      if (!questionsBySkill.has(skillId)) {
+        questionsBySkill.set(skillId, []);
+      }
+      questionsBySkill.get(skillId)!.push(question);
+    }
 
-    return NextResponse.json(shuffled);
+    const selectedQuestions: typeof questions = [];
+    for (const skillQuestions of questionsBySkill.values()) {
+      const shuffled = [...skillQuestions].sort(() => Math.random() - 0.5);
+      const difficultyPool = [
+        ...shuffled.filter((question) => question.difficulty === "Beginner"),
+        ...shuffled.filter((question) => question.difficulty === "Intermediate"),
+        ...shuffled.filter((question) => question.difficulty === "Advanced"),
+      ];
+      selectedQuestions.push(
+        ...difficultyPool.slice(0, QUESTIONS_PER_SKILL)
+      );
+    }
+
+    const finalQuestions = selectedQuestions.sort(
+      () => Math.random() - 0.5
+    );
+
+    return NextResponse.json({
+      questions: finalQuestions,
+      totalQuestions: finalQuestions.length,
+      questionsPerSkill: QUESTIONS_PER_SKILL,
+    });
   } catch (error) {
     console.error("Assessment questions error:", error);
     return NextResponse.json(
