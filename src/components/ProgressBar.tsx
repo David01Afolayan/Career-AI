@@ -6,7 +6,7 @@ type ProgressBarProps = {
 export default function ProgressBar({ label, value }: ProgressBarProps) {
   return (
     <div className="mb-4">
-      <div className="mb-1 flex justify-between text-sm text-slate-600">
+      <div className="mb-1 flex justify-between text-sm text-slate-400">
         <span>{label}</span>
         <span>{value}%</span>
       </div>

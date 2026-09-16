@@ -120,7 +120,7 @@ export default function RoadmapPage() {
     return (
       <main className="flex min-h-screen items-center justify-center bg-slate-950 text-white">
         <div className="text-center">
-          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-slate-800 border-t-blue-500" />
           <p className="mt-4 text-slate-400">
             Generating your personalized roadmap...
           </p>

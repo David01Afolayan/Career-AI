@@ -11,12 +11,17 @@ const skills = [
 
 export default function SkillsPage() {
   return (
-    <main className="min-h-screen bg-slate-100">
+    <main className="min-h-screen bg-slate-950 text-white">
       <Navbar />
       <div className="flex">
         <Sidebar />
-        <div className="flex-1 p-6">
-          <h1 className="mb-6 text-3xl font-bold text-slate-900">Skills Overview</h1>
+        <div className="flex-1 bg-slate-950 p-6 lg:p-10">
+          <p className="text-sm font-semibold uppercase tracking-widest text-blue-400">
+            Skills overview
+          </p>
+          <h1 className="mb-6 mt-2 text-3xl font-bold text-white">
+            Your skills
+          </h1>
           <div className="grid gap-4 md:grid-cols-2">
             {skills.map((skill) => (
               <SkillCard key={skill.name} {...skill} />

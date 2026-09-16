@@ -16,18 +16,16 @@ export default async function DashboardPage() {
     where: {
       id: Number(session.user.id),
     },
+    include: {
+      student: true,
+    },
   });
 
   if (!user) {
     redirect("/login");
   }
 
-  const profile = {
-    cgpa: null as number | null,
-    department: null as string | null,
-    level: null as string | null,
-    matricNumber: null as string | null,
-  };
+  const profile = user.student;
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
@@ -66,7 +64,7 @@ export default async function DashboardPage() {
               </p>
 
               <p className="text-xs text-slate-500">
-                Computer Science
+                {profile?.department || "Department not set"}
               </p>
             </div>
 
@@ -100,7 +98,7 @@ export default async function DashboardPage() {
           <StatCard
             title="CGPA"
             value={
-              profile.cgpa !== null
+              profile?.cgpa !== null && profile?.cgpa !== undefined
                 ? profile.cgpa.toFixed(2)
                 : "Not Set"
             }
@@ -204,18 +202,18 @@ export default async function DashboardPage() {
 
               <ProfileItem
                 label="Department"
-                value={profile.department || "Not set"}
+                value={profile?.department || "Not set"}
               />
 
               <ProfileItem
                 label="Level"
-                value={profile.level || "Not set"}
+                value={profile?.level?.toString() || "Not set"}
               />
 
               <ProfileItem
                 label="Matric Number"
                 value={
-                  profile.matricNumber || "Not set"
+                  profile?.matricNumber || "Not set"
                 }
               />
             </div>
