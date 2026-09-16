@@ -1,0 +1,79 @@
+CareerAI Model Evaluation Reports
+=================================
+
+
+Logistic Regression
+-------------------
+                           precision    recall  f1-score   support
+
+        Backend Developer       0.50      1.00      0.67         1
+           Cloud Engineer       1.00      1.00      1.00         1
+    Cybersecurity Analyst       1.00      1.00      1.00         1
+             Data Analyst       0.00      0.00      0.00         1
+       Frontend Developer       1.00      1.00      1.00         1
+     Full-Stack Developer       0.00      0.00      0.00         1
+Machine Learning Engineer       0.00      0.00      0.00         1
+       Software Developer       1.00      1.00      1.00         1
+
+                 accuracy                           0.62         8
+                macro avg       0.56      0.62      0.58         8
+             weighted avg       0.56      0.62      0.58         8
+
+
+
+Decision Tree
+-------------
+                           precision    recall  f1-score   support
+
+        Backend Developer       1.00      1.00      1.00         1
+           Cloud Engineer       1.00      1.00      1.00         1
+    Cybersecurity Analyst       1.00      1.00      1.00         1
+             Data Analyst       0.00      0.00      0.00         1
+       Frontend Developer       1.00      1.00      1.00         1
+     Full-Stack Developer       1.00      1.00      1.00         1
+Machine Learning Engineer       0.50      1.00      0.67         1
+       Software Developer       1.00      1.00      1.00         1
+
+                 accuracy                           0.88         8
+                macro avg       0.81      0.88      0.83         8
+             weighted avg       0.81      0.88      0.83         8
+
+
+
+KNN
+---
+                           precision    recall  f1-score   support
+
+        Backend Developer       0.50      1.00      0.67         1
+           Cloud Engineer       1.00      1.00      1.00         1
+    Cybersecurity Analyst       1.00      1.00      1.00         1
+             Data Analyst       0.00      0.00      0.00         1
+       Frontend Developer       1.00      1.00      1.00         1
+     Full-Stack Developer       0.00      0.00      0.00         1
+Machine Learning Engineer       0.00      0.00      0.00         1
+       Software Developer       1.00      1.00      1.00         1
+
+                 accuracy                           0.62         8
+                macro avg       0.56      0.62      0.58         8
+             weighted avg       0.56      0.62      0.58         8
+
+
+
+Random Forest
+-------------
+                           precision    recall  f1-score   support
+
+        Backend Developer       0.50      1.00      0.67         1
+           Cloud Engineer       1.00      1.00      1.00         1
+    Cybersecurity Analyst       1.00      1.00      1.00         1
+             Data Analyst       0.00      0.00      0.00         1
+       Frontend Developer       1.00      1.00      1.00         1
+     Full-Stack Developer       0.00      0.00      0.00         1
+Machine Learning Engineer       0.50      1.00      0.67         1
+       Software Developer       1.00      1.00      1.00         1
+
+                 accuracy                           0.75         8
+                macro avg       0.62      0.75      0.67         8
+             weighted avg       0.62      0.75      0.67         8
+
+
