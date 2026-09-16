@@ -260,6 +260,22 @@ export default async function DashboardPage() {
           />
         </div>
 
+        <div className="mt-6">
+          <a
+            href="/assessment/history"
+            className="block rounded-2xl border border-slate-800 bg-slate-900 p-6 transition hover:border-blue-500"
+          >
+            <div className="text-3xl">📊</div>
+            <h3 className="mt-4 text-xl font-bold">Assessment History</h3>
+            <p className="mt-2 text-sm text-slate-400">
+              Review previous assessments and track your skill development.
+            </p>
+            <span className="mt-4 inline-block font-semibold text-blue-400">
+              View History →
+            </span>
+          </a>
+        </div>
+
         {/* CAREER OPTIONS */}
         <div className="mt-8">
           <h3 className="text-2xl font-bold">
