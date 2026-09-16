@@ -2,6 +2,12 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import pandas as pd
 import joblib
+from features import (
+    MAX_SKILL_LEVEL,
+    MIN_SKILL_LEVEL,
+    NUMERIC_FEATURES,
+    SKILL_FEATURES,
+)
 
 
 app = FastAPI(
@@ -28,29 +34,6 @@ except Exception as error:
 # =========================
 # Feature order
 # =========================
-
-FEATURE_COLUMNS = [
-    "CGPA",
-    "HTML_CSS",
-    "JavaScript",
-    "React",
-    "NextJS",
-    "NodeJS",
-    "Python",
-    "Java",
-    "Cpp",
-    "SQL",
-    "Data_Analysis",
-    "Machine_Learning",
-    "Networking",
-    "Cybersecurity",
-    "Git_GitHub",
-    "Communication",
-    "Problem_Solving",
-    "Projects",
-    "Certifications",
-]
-
 
 # =========================
 # Request model
@@ -121,10 +104,25 @@ def predict(profile: StudentProfile):
 
         data.pop("Interest", None)
 
-        # Ensure correct feature order
+        for skill in SKILL_FEATURES:
+            value = getattr(profile, skill)
+            if not MIN_SKILL_LEVEL <= value <= MAX_SKILL_LEVEL:
+                raise HTTPException(
+                    status_code=422,
+                    detail=(
+                        f"{skill} must be between "
+                        f"{MIN_SKILL_LEVEL} and {MAX_SKILL_LEVEL}"
+                    ),
+                )
+
         dataframe = pd.DataFrame(
-            [data]
-        )[FEATURE_COLUMNS]
+            [
+                {
+                    feature: data.get(feature, 0)
+                    for feature in NUMERIC_FEATURES
+                }
+            ]
+        )
 
         # Get prediction
         prediction = model.predict(
@@ -181,6 +179,9 @@ def predict(profile: StudentProfile):
             "Prediction error:",
             error
         )
+
+        if isinstance(error, HTTPException):
+            raise
 
         raise HTTPException(
             status_code=500,

@@ -23,6 +23,14 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.tree import DecisionTreeClassifier
+from features import (
+    EXCLUDED_FEATURES,
+    MAX_SKILL_LEVEL,
+    MIN_SKILL_LEVEL,
+    NUMERIC_FEATURES,
+    SKILL_FEATURES,
+    TARGET_COLUMN,
+)
 
 
 DATA_PATH = "data/career_dataset.csv"
@@ -37,9 +45,55 @@ print(df.shape)
 print("\nDataset columns:")
 print(list(df.columns))
 
-target_column = "Recommended_Career"
-X = df.drop(columns=[target_column, "Interest"])
-y = df[target_column]
+print("\nValidating dataset...")
+
+required_columns = NUMERIC_FEATURES + EXCLUDED_FEATURES + [TARGET_COLUMN]
+missing_columns = [
+    column for column in required_columns if column not in df.columns
+]
+if missing_columns:
+    raise ValueError(
+        "Dataset is missing required columns: " + ", ".join(missing_columns)
+    )
+print("Required columns are present.")
+
+if df[TARGET_COLUMN].isnull().any():
+    raise ValueError("Target column contains missing values.")
+print("Target column contains no missing values.")
+
+for column in SKILL_FEATURES:
+    invalid_values = df[
+        ~df[column].between(MIN_SKILL_LEVEL, MAX_SKILL_LEVEL)
+    ]
+    if len(invalid_values) > 0:
+        raise ValueError(
+            f"{column} contains proficiency values outside "
+            f"{MIN_SKILL_LEVEL}-{MAX_SKILL_LEVEL}."
+        )
+print("Skill proficiency values are valid.")
+
+numeric_missing = df[NUMERIC_FEATURES].isnull().sum()
+if numeric_missing.sum() > 0:
+    print("\nMissing numeric values detected.")
+    for column in NUMERIC_FEATURES:
+        if df[column].isnull().any():
+            df[column] = df[column].fillna(df[column].median())
+    print("Missing numeric values replaced using column medians.")
+else:
+    print("No missing numeric values.")
+
+X = df[NUMERIC_FEATURES].copy()
+y = df[TARGET_COLUMN].copy()
+
+print("\nFinal ML features:")
+for feature in NUMERIC_FEATURES:
+    print(f"- {feature}")
+
+print("\nChecking for obvious target leakage...")
+for column in EXCLUDED_FEATURES:
+    if column in df.columns:
+        print(f"Excluded: {column} ({df[column].nunique()} unique values)")
+print("\nInterest is excluded from the development model to reduce the risk of target leakage.")
 
 print("\nFeatures used:")
 print(list(X.columns))
@@ -209,6 +263,20 @@ print("The final research model must be selected after training on the documente
 
 joblib.dump(selected_model, "models/career_model.pkl")
 joblib.dump(encoder, "models/career_encoder.pkl")
+
+metadata = {
+    "model": selected_model_name,
+    "target": TARGET_COLUMN,
+    "features": NUMERIC_FEATURES,
+    "excluded_features": EXCLUDED_FEATURES,
+    "skill_min": MIN_SKILL_LEVEL,
+    "skill_max": MAX_SKILL_LEVEL,
+    "dataset_rows": len(df),
+    "dataset_columns": len(df.columns),
+    "development_only": True,
+}
+joblib.dump(metadata, "models/model_metadata.pkl")
+print("models/model_metadata.pkl")
 
 with open("evaluation/classification_reports.txt", "w", encoding="utf-8") as file:
     file.write("CareerAI Model Evaluation Reports\n")
