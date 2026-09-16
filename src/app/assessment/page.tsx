@@ -1,309 +1,161 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 
-const skills = [
-  {
-    name: "HTML & CSS",
-    category: "Frontend",
-  },
-  {
-    name: "JavaScript",
-    category: "Frontend",
-  },
-  {
-    name: "React",
-    category: "Frontend",
-  },
-  {
-    name: "Next.js",
-    category: "Frontend",
-  },
-  {
-    name: "Node.js",
-    category: "Backend",
-  },
-  {
-    name: "Python",
-    category: "Programming",
-  },
-  {
-    name: "Java",
-    category: "Programming",
-  },
-  {
-    name: "C++",
-    category: "Programming",
-  },
-  {
-    name: "SQL",
-    category: "Database",
-  },
-  {
-    name: "Data Analysis",
-    category: "Data",
-  },
-  {
-    name: "Machine Learning",
-    category: "AI",
-  },
-  {
-    name: "Networking",
-    category: "Infrastructure",
-  },
-  {
-    name: "Cybersecurity",
-    category: "Security",
-  },
-  {
-    name: "Git & GitHub",
-    category: "Development Tools",
-  },
-  {
-    name: "Communication",
-    category: "Soft Skills",
-  },
-  {
-    name: "Problem Solving",
-    category: "Soft Skills",
-  },
-];
-
-const levels = [
-  {
-    value: 0,
-    label: "Beginner",
-    description: "Little or no experience",
-  },
-  {
-    value: 1,
-    label: "Basic",
-    description: "Understand the fundamentals",
-  },
-  {
-    value: 2,
-    label: "Intermediate",
-    description: "Can build projects independently",
-  },
-  {
-    value: 3,
-    label: "Advanced",
-    description: "Strong practical experience",
-  },
-];
+type Question = {
+  id: string;
+  question: string;
+  options: unknown;
+  difficulty: string;
+  skill: { id: number; name: string; category: string };
+};
 
 export default function AssessmentPage() {
   const router = useRouter();
-
-  const [current, setCurrent] = useState(0);
+  const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Record<string, number>>({});
-  const [loading, setLoading] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
-  const skill = skills[current];
+  useEffect(() => {
+    async function loadQuestions() {
+      try {
+        const response = await fetch("/api/assessment/questions");
+        const data = await response.json();
+        if (!response.ok) {
+          setError(data.error || "Unable to load assessment.");
+          return;
+        }
+        setQuestions(Array.isArray(data) ? data : data.questions || []);
+      } catch {
+        setError("Unable to connect to the server.");
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadQuestions();
+  }, []);
 
-  function selectLevel(level: number) {
-    setAnswers({
-      ...answers,
-      [skill.name]: level,
-    });
+  const currentQuestion = questions[currentIndex];
+  const options = currentQuestion && Array.isArray(currentQuestion.options)
+    ? currentQuestion.options.map(String)
+    : [];
+  const selectedAnswer = currentQuestion
+    ? answers[currentQuestion.id]
+    : undefined;
+
+  function selectAnswer(optionIndex: number) {
+    if (!currentQuestion) return;
+    setAnswers((previous) => ({ ...previous, [currentQuestion.id]: optionIndex }));
+    setError("");
   }
 
-  function nextQuestion() {
-    if (answers[skill.name] === undefined) {
-      alert("Please select your skill level.");
+  function handleNext() {
+    if (selectedAnswer === undefined) {
+      setError("Please select an answer before continuing.");
       return;
     }
-
-    if (current < skills.length - 1) {
-      setCurrent(current + 1);
+    setError("");
+    if (currentIndex < questions.length - 1) {
+      setCurrentIndex((previous) => previous + 1);
     }
   }
 
-  function previousQuestion() {
-    if (current > 0) {
-      setCurrent(current - 1);
-    }
+  function handlePrevious() {
+    setError("");
+    if (currentIndex > 0) setCurrentIndex((previous) => previous - 1);
   }
 
-  async function submitAssessment() {
-    if (answers[skill.name] === undefined) {
-      alert("Please select your skill level.");
+  async function handleSubmit() {
+    if (selectedAnswer === undefined) {
+      setError("Please select an answer before submitting.");
       return;
     }
+    if (Object.keys(answers).length !== questions.length) {
+      setError("Please answer all questions before submitting.");
+      return;
+    }
+    if (!window.confirm("Are you sure you want to submit your assessment? You will not be able to change your answers.")) return;
 
-    setLoading(true);
-
+    setSubmitting(true);
+    setError("");
     try {
-      const response = await fetch("/api/assessment", {
+      const response = await fetch("/api/assessment/submit", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          skills: answers,
+          answers: questions.map((question) => ({
+            questionId: question.id,
+            selectedAnswer: answers[question.id],
+          })),
         }),
       });
-
       const data = await response.json();
-
       if (!response.ok) {
-        alert(data.error || "Something went wrong.");
+        setError(data.error || "Unable to submit assessment.");
         return;
       }
-
-      router.push("/ai-result");
-      router.refresh();
+      router.push(`/assessment/result?assessmentId=${data.assessmentId}`);
     } catch {
-      alert("Unable to submit assessment.");
+      setError("Something went wrong while submitting your assessment.");
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   }
 
-  const progress = ((current + 1) / skills.length) * 100;
+  if (loading) {
+    return <main className="min-h-screen bg-slate-950 px-6 py-16 text-center text-white"><div className="text-4xl">🧠</div><h1 className="mt-4 text-2xl font-bold">Loading Career Assessment...</h1><p className="mt-2 text-slate-400">Preparing your questions.</p></main>;
+  }
+
+  if (error && questions.length === 0) {
+    return <main className="min-h-screen bg-slate-950 px-6 py-16 text-white"><div className="mx-auto max-w-xl rounded-2xl border border-red-500/30 bg-red-500/10 p-8 text-center"><h1 className="text-2xl font-bold">Unable to Load Assessment</h1><p className="mt-3 text-red-300">{error}</p><button onClick={() => window.location.reload()} className="mt-6 rounded-lg bg-white px-5 py-3 font-semibold text-slate-900">Try Again</button></div></main>;
+  }
+
+  if (!currentQuestion) {
+    return <main className="min-h-screen bg-slate-950 px-6 py-16 text-center text-white"><h1 className="text-2xl font-bold">No Assessment Questions Found</h1><p className="mt-3 text-slate-400">Please seed the assessment questions first.</p></main>;
+  }
+
+  const progress = Math.round(((currentIndex + 1) / questions.length) * 100);
+  const isLastQuestion = currentIndex === questions.length - 1;
 
   return (
-    <main className="min-h-screen bg-slate-950 px-6 py-10 text-white">
-      <div className="mx-auto max-w-3xl">
-        {/* HEADER */}
-
-        <Link
-          href="/dashboard"
-          className="mb-8 inline-flex items-center rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 transition hover:border-blue-400 hover:text-blue-300"
-        >
-          ← Back to Dashboard
-        </Link>
-
-        <div className="mb-10 text-center">
-          <p className="text-sm font-medium text-blue-400">
-            CAREERAI ASSESSMENT
-          </p>
-
-          <h1 className="mt-3 text-3xl font-bold sm:text-4xl">
-            Evaluate Your Technical Skills
-          </h1>
-
-          <p className="mx-auto mt-3 max-w-xl text-slate-400">
-            Rate your current ability in each skill. Your responses
-            will help CareerAI identify suitable career paths.
-          </p>
-        </div>
-
-        {/* PROGRESS */}
-
-        <div className="mb-8">
-          <div className="mb-2 flex justify-between text-sm">
-            <span className="text-slate-400">
-              Question {current + 1} of {skills.length}
-            </span>
-
-            <span className="text-blue-400">
-              {Math.round(progress)}%
-            </span>
+    <main className="min-h-screen bg-slate-950 px-4 py-8 text-white sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-4xl">
+        <header className="mb-8">
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-wider text-blue-400">CareerAI Assessment</p>
+              <h1 className="mt-2 text-3xl font-bold sm:text-4xl">Discover Your Technical Strengths</h1>
+              <p className="mt-2 text-slate-400">Answer the questions based on your current knowledge.</p>
+            </div>
+            <div className="rounded-xl border border-slate-800 bg-slate-900 px-5 py-3 text-center"><p className="text-xs text-slate-400">Question</p><p className="text-xl font-bold">{currentIndex + 1} / {questions.length}</p></div>
           </div>
+          <div className="mt-6"><div className="mb-2 flex justify-between text-sm"><span className="text-slate-400">Assessment Progress</span><span className="font-semibold text-blue-400">{progress}%</span></div><div className="h-3 overflow-hidden rounded-full bg-slate-800"><div className="h-full rounded-full bg-blue-500 transition-all" style={{ width: `${progress}%` }} /></div></div>
+        </header>
 
-          <div className="h-2 overflow-hidden rounded-full bg-slate-800">
-            <div
-              className="h-full rounded-full bg-blue-600 transition-all"
-              style={{ width: `${progress}%` }}
-            />
+        <section className="rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl sm:p-8">
+          <div className="mb-6 flex flex-wrap items-center gap-3">
+            <span className="rounded-full bg-blue-500/10 px-3 py-1 text-sm font-semibold text-blue-400">{currentQuestion.skill.name}</span>
+            <span className="rounded-full bg-slate-800 px-3 py-1 text-sm text-slate-300">{currentQuestion.skill.category}</span>
+            <span className="rounded-full bg-slate-800 px-3 py-1 text-sm text-slate-300">{currentQuestion.difficulty}</span>
           </div>
-        </div>
-
-        {/* QUESTION CARD */}
-
-        <div className="rounded-2xl border border-slate-800 bg-slate-900 p-8">
-          <div className="mb-8">
-            <span className="rounded-full bg-blue-500/10 px-3 py-1 text-xs text-blue-400">
-              {skill.category}
-            </span>
-
-            <h2 className="mt-5 text-2xl font-bold">
-              How would you rate your {skill.name} skill?
-            </h2>
-
-            <p className="mt-2 text-sm text-slate-400">
-              Select the level that best represents your current
-              practical ability.
-            </p>
-          </div>
-
-          {/* LEVEL OPTIONS */}
-
-          <div className="space-y-4">
-            {levels.map((level) => {
-              const selected =
-                answers[skill.name] === level.value;
-
-              return (
-                <button
-                  key={level.value}
-                  onClick={() => selectLevel(level.value)}
-                  className={`w-full rounded-xl border p-5 text-left transition ${
-                    selected
-                      ? "border-blue-500 bg-blue-500/10"
-                      : "border-slate-700 bg-slate-800 hover:border-slate-600"
-                  }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div
-                      className={`flex h-10 w-10 items-center justify-center rounded-full border ${
-                        selected
-                          ? "border-blue-500 bg-blue-600"
-                          : "border-slate-600"
-                      }`}
-                    >
-                      {selected ? "✓" : level.value + 1}
-                    </div>
-
-                    <div>
-                      <h3 className="font-semibold">
-                        {level.label}
-                      </h3>
-
-                      <p className="mt-1 text-sm text-slate-400">
-                        {level.description}
-                      </p>
-                    </div>
-                  </div>
-                </button>
-              );
+          <h2 className="text-xl font-semibold leading-relaxed sm:text-2xl">{currentQuestion.question}</h2>
+          <div className="mt-8 space-y-4">
+            {options.map((option, index) => {
+              const isSelected = selectedAnswer === index;
+              return <button key={index} type="button" onClick={() => selectAnswer(index)} className={`flex w-full items-center gap-4 rounded-xl border p-4 text-left transition ${isSelected ? "border-blue-500 bg-blue-500/10" : "border-slate-700 bg-slate-950 hover:border-slate-500 hover:bg-slate-800"}`}><span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full border font-semibold ${isSelected ? "border-blue-500 bg-blue-500 text-white" : "border-slate-600 text-slate-300"}`}>{String.fromCharCode(65 + index)}</span><span className={isSelected ? "font-semibold text-white" : "text-slate-300"}>{option}</span></button>;
             })}
           </div>
-
-          {/* BUTTONS */}
-
-          <div className="mt-8 flex justify-between gap-4">
-            <button
-              onClick={previousQuestion}
-              disabled={current === 0}
-              className="rounded-lg border border-slate-700 px-5 py-3 text-sm font-medium hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-30"
-            >
-              ← Previous
-            </button>
-
-            {current === skills.length - 1 ? (
-              <button
-                onClick={submitAssessment}
-                disabled={loading}
-                className="rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold hover:bg-blue-500 disabled:opacity-50"
-              >
-                {loading
-                  ? "Saving..."
-                  : "Complete Assessment"}
-              </button>
-            ) : (
-              <button
-                onClick={nextQuestion}
-                className="rounded-lg bg-blue-600 px-6 py-3 text-sm font-semibold hover:bg-blue-500"
-              >
-                Next →
-              </button>
-            )}
+          {error && <div className="mt-6 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">{error}</div>}
+          <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
+            <button type="button" onClick={handlePrevious} disabled={currentIndex === 0 || submitting} className="rounded-xl border border-slate-700 px-6 py-3 font-semibold text-slate-300 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40">← Previous</button>
+            {!isLastQuestion ? <button type="button" onClick={handleNext} disabled={submitting} className="rounded-xl bg-blue-600 px-6 py-3 font-semibold hover:bg-blue-500 disabled:opacity-50">Next →</button> : <button type="button" onClick={handleSubmit} disabled={submitting} className="rounded-xl bg-green-600 px-6 py-3 font-semibold hover:bg-green-500 disabled:opacity-50">{submitting ? "Submitting..." : "Submit Assessment ✓"}</button>}
           </div>
-        </div>
+        </section>
+        <div className="mt-6 text-center text-sm text-slate-500">Your answers are used to estimate your current technical proficiency and improve your career recommendations.</div>
       </div>
     </main>
   );

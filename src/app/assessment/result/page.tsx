@@ -1,0 +1,104 @@
+"use client";
+
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+
+type SkillResult = {
+  skillId: number;
+  skillName: string;
+  total: number;
+  correct: number;
+  percentage: number;
+  proficiency: string;
+};
+
+type AssessmentResult = {
+  assessmentId: number;
+  score: number;
+  correctCount: number;
+  totalQuestions: number;
+  skills: SkillResult[];
+  createdAt: string;
+};
+
+export default function AssessmentResultPage() {
+  const searchParams = useSearchParams();
+  const assessmentId = searchParams.get("assessmentId");
+  const [result, setResult] = useState<AssessmentResult | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function loadResult() {
+      if (!assessmentId) {
+        setError("Assessment ID is missing.");
+        setLoading(false);
+        return;
+      }
+      try {
+        const response = await fetch(`/api/assessment/${assessmentId}`);
+        const data = await response.json();
+        if (!response.ok) {
+          setError(data.error || "Unable to load result.");
+          return;
+        }
+        setResult(data);
+      } catch {
+        setError("Unable to connect to the server.");
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadResult();
+  }, [assessmentId]);
+
+  if (loading) {
+    return <main className="min-h-screen bg-slate-950 px-6 py-16 text-center text-white"><div className="text-4xl">📊</div><h1 className="mt-4 text-2xl font-bold">Calculating Your Results...</h1><p className="mt-2 text-slate-400">Analyzing your technical proficiency.</p></main>;
+  }
+
+  if (error || !result) {
+    return <main className="min-h-screen bg-slate-950 px-6 py-16 text-white"><div className="mx-auto max-w-xl rounded-2xl border border-red-500/30 bg-red-500/10 p-8 text-center"><h1 className="text-2xl font-bold">Unable to Load Results</h1><p className="mt-3 text-red-300">{error || "Result not found."}</p><Link href="/assessment" className="mt-6 inline-block rounded-lg bg-white px-5 py-3 font-semibold text-slate-900">Take Assessment Again</Link></div></main>;
+  }
+
+  const strongestSkill = result.skills[0];
+  const weakestSkill = result.skills[result.skills.length - 1];
+
+  return (
+    <main className="min-h-screen bg-slate-950 px-4 py-10 text-white sm:px-6">
+      <div className="mx-auto max-w-5xl">
+        <div className="text-center">
+          <div className="text-5xl">🎉</div>
+          <p className="mt-4 text-sm font-semibold uppercase tracking-wider text-blue-400">Assessment Completed</p>
+          <h1 className="mt-2 text-3xl font-bold sm:text-4xl">Your Technical Assessment Results</h1>
+          <p className="mx-auto mt-3 max-w-2xl text-slate-400">Your results have been saved and will be used to improve your CareerAI recommendations.</p>
+        </div>
+
+        <section className="mt-10 grid gap-6 md:grid-cols-3">
+          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 text-center"><p className="text-sm text-slate-400">Overall Score</p><p className="mt-3 text-5xl font-bold text-blue-400">{Math.round(result.score)}%</p></div>
+          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 text-center"><p className="text-sm text-slate-400">Correct Answers</p><p className="mt-3 text-4xl font-bold">{result.correctCount}<span className="text-xl text-slate-500">/{result.totalQuestions}</span></p></div>
+          <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6 text-center"><p className="text-sm text-slate-400">Skills Assessed</p><p className="mt-3 text-4xl font-bold">{result.skills.length}</p></div>
+        </section>
+
+        <section className="mt-8 grid gap-6 md:grid-cols-2">
+          <div className="rounded-2xl border border-green-500/20 bg-green-500/5 p-6"><p className="text-sm font-semibold text-green-400">Strongest Skill</p>{strongestSkill && <><h2 className="mt-2 text-2xl font-bold">{strongestSkill.skillName}</h2><p className="mt-2 text-slate-400">{strongestSkill.percentage}% proficiency</p></>}</div>
+          <div className="rounded-2xl border border-orange-500/20 bg-orange-500/5 p-6"><p className="text-sm font-semibold text-orange-400">Area to Improve</p>{weakestSkill && <><h2 className="mt-2 text-2xl font-bold">{weakestSkill.skillName}</h2><p className="mt-2 text-slate-400">{weakestSkill.percentage}% proficiency</p></>}</div>
+        </section>
+
+        <section className="mt-8 rounded-2xl border border-slate-800 bg-slate-900 p-6 sm:p-8">
+          <h2 className="text-2xl font-bold">Skill Proficiency</h2>
+          <p className="mt-1 text-slate-400">Your estimated proficiency based on assessment performance.</p>
+          <div className="mt-6 space-y-6">
+            {result.skills.map((skill) => <div key={skill.skillId}><div className="mb-2 flex flex-col justify-between gap-2 sm:flex-row"><div><p className="font-semibold">{skill.skillName}</p><p className="text-sm text-slate-500">{skill.correct}/{skill.total} correct</p></div><div className="flex items-center gap-3"><span className="text-sm text-slate-400">{skill.proficiency}</span><span className="font-bold text-blue-400">{skill.percentage}%</span></div></div><div className="h-3 overflow-hidden rounded-full bg-slate-800"><div className="h-full rounded-full bg-blue-500" style={{ width: `${skill.percentage}%` }} /></div></div>)}
+          </div>
+        </section>
+
+        <section className="mt-8 rounded-2xl border border-blue-500/20 bg-blue-500/5 p-6 text-center sm:p-8">
+          <h2 className="text-2xl font-bold">Ready to Discover Your Career Path?</h2>
+          <p className="mx-auto mt-2 max-w-2xl text-slate-400">CareerAI can now use your updated skill profile to generate an AI-powered career recommendation.</p>
+          <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row"><Link href="/ai-result" className="rounded-xl bg-blue-600 px-6 py-3 font-semibold hover:bg-blue-500">Get AI Career Recommendation →</Link><Link href="/dashboard" className="rounded-xl border border-slate-700 px-6 py-3 font-semibold text-slate-300 hover:bg-slate-800">Back to Dashboard</Link></div>
+        </section>
+      </div>
+    </main>
+  );
+}
