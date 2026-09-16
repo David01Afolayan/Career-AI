@@ -48,6 +48,7 @@ export default async function CareersPage() {
                 {careers.map((career) => (
                   <CareerCard
                     key={career.id}
+                    href={`/careers/${career.id}`}
                     title={career.title}
                     description={career.description}
                     skills={parseSkills(career.requiredSkills)}

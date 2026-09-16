@@ -10,6 +10,7 @@ type Recommendation = {
 
 type Prediction = {
   predicted_career: string;
+  careerId: number | null;
   confidence: number;
   recommendations: Recommendation[];
 };
@@ -123,6 +124,14 @@ export default function AiResultPage() {
                   {prediction.confidence}%
                 </span>
               </p>
+              {prediction.careerId && (
+                <Link
+                  href={`/careers/${prediction.careerId}`}
+                  className="mt-6 inline-block rounded-lg bg-cyan-500 px-5 py-3 font-semibold text-slate-950 hover:bg-cyan-400"
+                >
+                  Explore This Career →
+                </Link>
+              )}
             </section>
 
             <section className="rounded-2xl border border-slate-800 bg-slate-900 p-6">

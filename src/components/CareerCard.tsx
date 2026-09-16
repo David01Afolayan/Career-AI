@@ -1,13 +1,14 @@
 type CareerCardProps = {
+  href?: string;
   title: string;
   description: string;
   skills: string[];
   match: number;
 };
 
-export default function CareerCard({ title, description, skills, match }: CareerCardProps) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-slate-900 p-5 transition hover:-translate-y-1 hover:border-blue-400/40">
+export default function CareerCard({ href, title, description, skills, match }: CareerCardProps) {
+  const content = (
+    <>
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-xl font-semibold text-white">{title}</h3>
         <span className="rounded-full bg-blue-400/10 px-2.5 py-1 text-xs font-bold text-blue-300">
@@ -22,6 +23,17 @@ export default function CareerCard({ title, description, skills, match }: Career
           </span>
         ))}
       </div>
+      {href && <p className="mt-4 text-sm font-medium text-cyan-400">View Career Details →</p>}
+    </>
+  );
+
+  return href ? (
+    <a href={href} className="block rounded-2xl border border-white/10 bg-slate-900 p-5 transition hover:-translate-y-1 hover:border-cyan-400/50">
+      {content}
+    </a>
+  ) : (
+    <div className="rounded-2xl border border-white/10 bg-slate-900 p-5 transition hover:-translate-y-1 hover:border-blue-400/40">
+      {content}
     </div>
   );
 }

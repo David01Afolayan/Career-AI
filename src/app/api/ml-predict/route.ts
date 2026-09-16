@@ -120,9 +120,26 @@ export async function POST(request: Request) {
       );
     }
 
+    const predictedCareerName =
+      prediction &&
+      typeof prediction === "object" &&
+      "predicted_career" in prediction &&
+      typeof prediction.predicted_career === "string"
+        ? prediction.predicted_career
+        : null;
+    const predictedCareer = predictedCareerName
+      ? await db.career.findFirst({
+          where: { title: predictedCareerName },
+          select: { id: true },
+        })
+      : null;
+
     return NextResponse.json({
       success: true,
-      prediction,
+      prediction:
+        prediction && typeof prediction === "object"
+          ? { ...prediction, careerId: predictedCareer?.id ?? null }
+          : prediction,
     });
   } catch (error) {
     console.error("ML prediction error:", error);
