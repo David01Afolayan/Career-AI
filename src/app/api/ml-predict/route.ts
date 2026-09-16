@@ -60,6 +60,22 @@ export async function POST(request: Request) {
       );
     }
 
+    if (
+      !student.department ||
+      student.level === null ||
+      student.cgpa === null ||
+      !student.interests ||
+      student.skills.length < 3
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Please complete your profile and add at least 3 skills before requesting an AI career recommendation.",
+        },
+        { status: 400 }
+      );
+    }
+
     const body: unknown = await request.json().catch(() => ({}));
     const input =
       body && typeof body === "object" && !Array.isArray(body)

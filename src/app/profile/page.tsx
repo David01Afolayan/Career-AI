@@ -115,6 +115,16 @@ export default function ProfilePage() {
           </p>
         </div>
 
+        <div className="mb-6 rounded-2xl border border-slate-800 bg-slate-900 p-5">
+          <h2 className="text-lg font-semibold">
+            Complete Your Career Profile
+          </h2>
+          <p className="mt-1 text-sm text-slate-400">
+            Providing accurate information helps CareerAI generate more
+            relevant career recommendations.
+          </p>
+        </div>
+
         {message && (
           <div className="mb-6 rounded-lg border border-green-500/30 bg-green-500/10 p-4 text-green-400">
             {message}

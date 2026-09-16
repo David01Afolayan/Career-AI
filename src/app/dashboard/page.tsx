@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
+import ProfileCompletion from "@/components/ProfileCompletion";
 
 export const dynamic = "force-dynamic";
 
@@ -90,6 +91,10 @@ export default async function DashboardPage() {
 
       {/* CONTENT */}
       <section className="mx-auto max-w-7xl px-6 py-10">
+        <div className="mb-6">
+          <ProfileCompletion />
+        </div>
+
         {/* WELCOME */}
         <div className="mb-8">
           <p className="text-sm text-blue-400">
