@@ -2,195 +2,125 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
+async function getStudent() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return null;
+  }
+
+  return db.student.findUnique({
+    where: { userId: Number(session.user.id) },
+  });
+}
+
 export async function GET() {
   try {
-    const session = await auth();
-
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
-    const student = await db.student.findUnique({
-      where: {
-        userId: Number(session.user.id),
-      },
-    });
-
+    const student = await getStudent();
     if (!student) {
-      return NextResponse.json(
-        { error: "Student not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Student profile not found" }, { status: 404 });
     }
 
-    const progress = await db.progress.findMany({
-      where: {
-        studentId: student.id,
-      },
+    const resources = await db.learningResource.findMany({
       include: {
-        resource: {
-          include: {
-            skill: true,
-          },
+        skill: true,
+        progress: {
+          where: { studentId: student.id },
         },
       },
-      orderBy: {
-        updatedAt: "desc",
-      },
+      orderBy: { title: "asc" },
     });
 
-    const totalResources =
-      await db.learningResource.count();
+    const formattedResources = resources.map((resource) => {
+      const progressRecord = resource.progress[0];
+      return {
+        id: resource.id,
+        title: resource.title,
+        description: resource.description,
+        url: resource.url,
+        resourceType: resource.resourceType,
+        difficulty: resource.difficulty,
+        skill: resource.skill,
+        status: progressRecord?.status || "NOT_STARTED",
+        completionPercentage: progressRecord?.completionPercentage || 0,
+      };
+    });
 
-    const completedResources =
-      progress.filter(
-        (item) =>
-          item.status === "COMPLETED"
-      ).length;
-
-    const inProgressResources =
-      progress.filter(
-        (item) =>
-          item.status === "IN_PROGRESS"
-      ).length;
-
+    const totalResources = formattedResources.length;
+    const completedResources = formattedResources.filter(
+      (resource) => resource.status === "COMPLETED"
+    ).length;
+    const inProgressResources = formattedResources.filter(
+      (resource) => resource.status === "IN_PROGRESS"
+    ).length;
     const overallProgress =
       totalResources > 0
         ? Math.round(
-            (completedResources /
-              totalResources) *
-              100
+            formattedResources.reduce(
+              (total, resource) => total + resource.completionPercentage,
+              0
+            ) / totalResources
           )
         : 0;
 
     return NextResponse.json({
-      progress,
+      resources: formattedResources,
       totalResources,
       completedResources,
       inProgressResources,
       overallProgress,
     });
   } catch (error) {
-    console.error(
-      "Progress GET error:",
-      error
-    );
-
-    return NextResponse.json(
-      {
-        error:
-          "Failed to load learning progress.",
-      },
-      { status: 500 }
-    );
+    console.error("GET progress error:", error);
+    return NextResponse.json({ error: "Failed to fetch learning progress" }, { status: 500 });
   }
 }
 
-export async function POST(
-  request: Request
-) {
+export async function POST(request: Request) {
   try {
-    const session = await auth();
-
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+    const student = await getStudent();
+    if (!student) {
+      return NextResponse.json({ error: "Student profile not found" }, { status: 404 });
     }
 
     const body = await request.json();
-
-    const resourceId = body.resourceId;
+    const resourceId = typeof body.resourceId === "string" ? body.resourceId : "";
     const status = body.status;
+    const validStatuses = ["NOT_STARTED", "IN_PROGRESS", "COMPLETED"];
 
-    if (!resourceId || !status) {
-      return NextResponse.json(
-        {
-          error:
-            "Resource ID and status are required.",
-        },
-        { status: 400 }
-      );
+    if (!resourceId || !validStatuses.includes(status)) {
+      return NextResponse.json({ error: "Invalid resource or progress status" }, { status: 400 });
     }
 
-    const validStatuses = [
-      "NOT_STARTED",
-      "IN_PROGRESS",
-      "COMPLETED",
-    ];
-
-    if (!validStatuses.includes(status)) {
-      return NextResponse.json(
-        {
-          error: "Invalid progress status.",
-        },
-        { status: 400 }
-      );
+    const resource = await db.learningResource.findUnique({ where: { id: resourceId } });
+    if (!resource) {
+      return NextResponse.json({ error: "Learning resource not found" }, { status: 404 });
     }
 
-    const student = await db.student.findUnique({
+    let percentage = Number(body.completionPercentage);
+    if (status === "NOT_STARTED") percentage = 0;
+    if (status === "IN_PROGRESS") {
+      percentage = Number.isFinite(percentage)
+        ? Math.max(1, Math.min(99, percentage))
+        : 50;
+    }
+    if (status === "COMPLETED") percentage = 100;
+
+    const progress = await db.progress.upsert({
       where: {
-        userId: Number(session.user.id),
+        studentId_resourceId: { studentId: student.id, resourceId },
+      },
+      update: { status, completionPercentage: percentage },
+      create: {
+        studentId: student.id,
+        resourceId,
+        status,
+        completionPercentage: percentage,
       },
     });
 
-    if (!student) {
-      return NextResponse.json(
-        { error: "Student not found" },
-        { status: 404 }
-      );
-    }
-
-    const completionPercentage =
-      status === "COMPLETED"
-        ? 100
-        : status === "IN_PROGRESS"
-          ? 50
-          : 0;
-
-    const progress =
-      await db.progress.upsert({
-        where: {
-          studentId_resourceId: {
-            studentId: student.id,
-            resourceId,
-          },
-        },
-
-        update: {
-          status,
-          completionPercentage,
-          updatedAt: new Date(),
-        },
-
-        create: {
-          studentId: student.id,
-          resourceId,
-          status,
-          completionPercentage,
-        },
-      });
-
-    return NextResponse.json({
-      success: true,
-      progress,
-    });
+    return NextResponse.json(progress);
   } catch (error) {
-    console.error(
-      "Progress POST error:",
-      error
-    );
-
-    return NextResponse.json(
-      {
-        error:
-          "Failed to update learning progress.",
-      },
-      { status: 500 }
-    );
+    console.error("POST progress error:", error);
+    return NextResponse.json({ error: "Failed to update progress" }, { status: 500 });
   }
 }

@@ -26,6 +26,19 @@ export default async function DashboardPage() {
   }
 
   const profile = user.student;
+  const totalResources = await db.learningResource.count();
+  const completedProgress = profile
+    ? await db.progress.count({
+        where: {
+          studentId: profile.id,
+          status: "COMPLETED",
+        },
+      })
+    : 0;
+  const learningProgress =
+    totalResources > 0
+      ? Math.round((completedProgress / totalResources) * 100)
+      : 0;
 
   return (
     <main className="min-h-screen bg-slate-950 text-white">
@@ -122,7 +135,7 @@ export default async function DashboardPage() {
 
           <StatCard
             title="Learning Progress"
-            value="0%"
+            value={`${learningProgress}%`}
             description="Overall progress"
             icon="📚"
             href="/progress"
