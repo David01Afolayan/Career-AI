@@ -127,6 +127,7 @@ export default function AdminDashboard() {
             <ManagementCard title="Careers" description="Manage available technology careers." href="/admin/careers" icon="💼" />
             <ManagementCard title="Skills" description="Manage skills used by the system." href="/admin/skills" icon="🧠" />
             <ManagementCard title="Resources" description="Manage learning resources." href="/admin/resources" icon="📚" />
+            <ManagementCard title="Assessment Questions" description="Create and manage student assessment questions." href="/admin/questions" icon="📝" />
           </div>
         </section>
       </div>
