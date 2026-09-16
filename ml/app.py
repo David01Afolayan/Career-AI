@@ -59,6 +59,8 @@ FEATURE_COLUMNS = [
 
 class StudentProfile(BaseModel):
 
+    CGPA: float = 0.0
+
     HTML_CSS: int = 0
     JavaScript: int = 0
     React: int = 0
@@ -80,8 +82,6 @@ class StudentProfile(BaseModel):
     Certifications: int = 0
 
     Interest: str = ""
-
-    CGPA: float = 0
 
 
 # =========================

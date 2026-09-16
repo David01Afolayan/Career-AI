@@ -23,25 +23,6 @@ const skillMap: Record<string, string> = {
   "Problem Solving": "Problem_Solving",
 };
 
-const featureNames = [
-  "HTML_CSS",
-  "JavaScript",
-  "React",
-  "NextJS",
-  "NodeJS",
-  "Python",
-  "Java",
-  "Cpp",
-  "SQL",
-  "Data_Analysis",
-  "Machine_Learning",
-  "Networking",
-  "Cybersecurity",
-  "Git_GitHub",
-  "Communication",
-  "Problem_Solving",
-] as const;
-
 export async function POST() {
   try {
     const session = await auth();
@@ -79,22 +60,40 @@ export async function POST() {
       );
     }
 
-    const features: Record<string, number> = {
-      CGPA: student.cgpa,
-      Projects: student.projects,
-      Certifications: student.certifications,
+    const features: Record<string, number | string> = {
+      CGPA: student.cgpa ?? 0,
+      HTML_CSS: 0,
+      JavaScript: 0,
+      React: 0,
+      NextJS: 0,
+      NodeJS: 0,
+      Python: 0,
+      Java: 0,
+      Cpp: 0,
+      SQL: 0,
+      Data_Analysis: 0,
+      Machine_Learning: 0,
+      Networking: 0,
+      Cybersecurity: 0,
+      Git_GitHub: 0,
+      Communication: 0,
+      Problem_Solving: 0,
+      Projects: student.projects ?? 0,
+      Certifications: student.certifications ?? 0,
+      Interest: student.interests ?? "",
     };
-    for (const featureName of featureNames) features[featureName] = 0;
     for (const studentSkill of student.skills) {
-      const feature = skillMap[studentSkill.skill.name];
-      if (feature) features[feature] = studentSkill.proficiencyLevel;
+      const featureName = skillMap[studentSkill.skill.name];
+      if (featureName) {
+        features[featureName] = studentSkill.proficiencyLevel;
+      }
     }
 
     const mlApiUrl = (process.env.ML_API_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
     const mlResponse = await fetch(`${mlApiUrl}/predict`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...features, Interest: student.interests }),
+      body: JSON.stringify(features),
       cache: "no-store",
     });
     const result = await mlResponse.json().catch(() => null);
