@@ -34,8 +34,10 @@ model Career {
   category       String
   description    String
   requiredSkills String
+  demandLevel    String  @default("Medium")
   salaryRange    String?
   predictions    Prediction[]
+  skills         CareerSkill[]
 }
 
 model Prediction {
@@ -50,6 +52,18 @@ model Skill {
   name              String             @unique
   learningResources LearningResource[]
   students          StudentSkill[]
+  careers           CareerSkill[]
+}
+
+model CareerSkill {
+  careerId      Int
+  skillId       Int
+  requiredLevel Int      @default(1)
+  importance    Int      @default(1)
+  career        Career   @relation(fields: [careerId], references: [id], onDelete: Cascade)
+  skill         Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@id([careerId, skillId])
 }
 
 model LearningResource {
