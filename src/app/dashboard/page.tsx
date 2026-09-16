@@ -45,6 +45,15 @@ export default async function DashboardPage() {
           </div>
 
           <div className="flex items-center gap-4">
+            {session.user.role === "ADMIN" && (
+              <a
+                href="/admin"
+                className="rounded-lg bg-cyan-500 px-4 py-2 text-sm font-semibold text-slate-950"
+              >
+                Admin Dashboard
+              </a>
+            )}
+
             <a
               href="/profile"
               className="rounded-lg border border-slate-700 px-4 py-2 text-sm hover:bg-slate-800"
