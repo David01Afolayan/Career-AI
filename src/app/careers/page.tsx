@@ -3,6 +3,8 @@ import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
 import { db } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 function parseSkills(requiredSkills: string) {
   return requiredSkills
     .split(",")
