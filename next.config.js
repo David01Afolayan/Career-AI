@@ -1,6 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  outputFileTracingIncludes: {
+    "/*": [
+      "./node_modules/@prisma/client/**/*",
+      "./node_modules/.prisma/client/**/*",
+    ],
+  },
   async headers() {
     const headers = [
       { key: "X-Content-Type-Options", value: "nosniff" },
