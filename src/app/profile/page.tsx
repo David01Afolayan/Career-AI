@@ -188,8 +188,8 @@ export default function ProfilePage() {
           <section className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
             <h2 className="mb-2 text-xl font-semibold">Skills</h2>
             <p className="mb-6 text-sm text-slate-400">
-              Add at least three skills and select your current proficiency level
-              from 0 (beginner) to 3 (advanced).
+              Skills and proficiency levels detected from your assessments are
+              selected automatically. You can review them here before saving.
             </p>
             <div className="space-y-3">
               {availableSkills.map((skill) => {
@@ -214,6 +214,11 @@ export default function ProfilePage() {
                       <span>
                         <span className="block font-medium">{skill.name}</span>
                         <span className="text-xs text-slate-500">{skill.category}</span>
+                        {selected && (
+                          <span className="mt-1 block text-xs text-cyan-400">
+                            Assessment result applied
+                          </span>
+                        )}
                       </span>
                     </label>
                     {selected && (

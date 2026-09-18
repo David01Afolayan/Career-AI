@@ -109,6 +109,9 @@ export default function AssessmentResultPage() {
             <Link href={fieldPassed ? "/ai-result" : "/assessment"} className="rounded-xl bg-blue-600 px-6 py-3 font-semibold hover:bg-blue-500">
               {!fieldTest || fieldPassed ? "Get AI Career Recommendation →" : "Take General Assessment →"}
             </Link>
+            <Link href="/profile" className="rounded-xl border border-cyan-500/50 px-6 py-3 font-semibold text-cyan-300 hover:bg-cyan-500/10">
+              View Updated Skill Profile
+            </Link>
             <Link href="/dashboard" className="rounded-xl border border-slate-700 px-6 py-3 font-semibold text-slate-300 hover:bg-slate-800">Back to Dashboard</Link>
           </div>
         </section>
