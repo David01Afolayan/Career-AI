@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import BackButton from "@/components/BackButton";
+import StudentMenu from "@/components/StudentMenu";
 
 type Student = {
   id: number;
@@ -110,6 +111,7 @@ export default function AdminStudentsPage() {
             Career<span className="text-blue-400">AI</span>
           </Link>
           <div className="flex items-center gap-4 text-sm text-slate-300">
+            <StudentMenu role="ADMIN" />
             <Link href="/admin" className="hover:text-white">Admin Dashboard</Link>
             <Link href="/dashboard" className="hover:text-white">Student View</Link>
           </div>

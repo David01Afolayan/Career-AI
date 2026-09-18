@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import BackButton from "@/components/BackButton";
+import StudentMenu from "@/components/StudentMenu";
 
 type Skill = { id: number; name: string; category: string };
 type Resource = {
@@ -132,7 +133,10 @@ export default function AdminResourcesPage() {
       <nav className="border-b border-white/10 bg-slate-950">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
           <Link href="/admin" className="text-2xl font-bold">Career<span className="text-blue-400">AI</span></Link>
-          <Link href="/admin" className="text-sm text-slate-300 hover:text-white">Admin Dashboard</Link>
+          <div className="flex items-center gap-4">
+            <StudentMenu role="ADMIN" />
+            <Link href="/admin" className="text-sm text-slate-300 hover:text-white">Admin Dashboard</Link>
+          </div>
         </div>
       </nav>
       <section className="mx-auto max-w-7xl px-6 py-10">

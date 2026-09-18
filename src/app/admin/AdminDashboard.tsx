@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import StudentMenu from "@/components/StudentMenu";
 import {
   ResponsiveContainer,
   BarChart,
@@ -78,6 +79,7 @@ export default function AdminDashboard() {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <Link href="/admin" className="text-2xl font-bold text-cyan-400">CareerAI</Link>
           <div className="flex items-center gap-4">
+            <StudentMenu role="ADMIN" />
             <Link href="/dashboard" className="text-sm text-slate-300 hover:text-white">Student View</Link>
             <Link href="/profile" className="text-sm text-slate-300 hover:text-white">Profile</Link>
           </div>

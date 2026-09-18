@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import StudentMenu from "@/components/StudentMenu";
 
 type StudentDetails = {
   id: number;
@@ -74,9 +75,12 @@ export default function AdminStudentDetailsPage({
           <Link href="/admin" className="text-2xl font-bold">
             Career<span className="text-blue-400">AI</span>
           </Link>
-          <Link href="/admin/students" className="text-sm text-slate-300 hover:text-white">
-            Back to Students
-          </Link>
+          <div className="flex items-center gap-4">
+            <StudentMenu role="ADMIN" />
+            <Link href="/admin/students" className="text-sm text-slate-300 hover:text-white">
+              Back to Students
+            </Link>
+          </div>
         </div>
       </nav>
       <section className="mx-auto max-w-5xl px-6 py-10">
