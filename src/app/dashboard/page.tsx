@@ -75,9 +75,18 @@ export default function DashboardPage() {
           }`}
         >
           <div className="flex items-center justify-between border-b border-slate-800 pb-5">
-            <div>
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-600 text-lg font-bold text-white ring-2 ring-blue-400/40">
+                {data.user.profileImage ? (
+                  <img src={data.user.profileImage} alt={`${data.user.name}'s profile`} className="h-full w-full object-cover" />
+                ) : (
+                  data.user.name.trim().charAt(0).toUpperCase() || "U"
+                )}
+              </div>
+              <div>
               <p className="text-sm font-semibold uppercase tracking-wider text-blue-400">Account Menu</p>
               <p className="mt-1 font-semibold">{data.user.name}</p>
+              </div>
             </div>
             <button type="button" aria-label="Close navigation" onClick={() => setNavigationOpen(false)} className="rounded-lg p-2 text-2xl text-slate-400 hover:bg-slate-800 hover:text-white">×</button>
           </div>
@@ -102,7 +111,7 @@ export default function DashboardPage() {
           <div><p className="text-sm font-semibold uppercase tracking-wider text-blue-400">Student Dashboard</p><h1 className="mt-2 text-3xl font-bold sm:text-4xl">Welcome, {data.user.name}</h1><p className="mt-2 text-slate-400">Track your skills, assessments, recommendations and learning progress.</p></div>
           <div className="flex items-center gap-3">
             <button type="button" aria-label="Open profile navigation" onClick={() => setNavigationOpen(true)} className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-lg font-bold text-white ring-2 ring-blue-400/40 transition hover:bg-blue-500">
-              {data.user.profileImage ? <img src={data.user.profileImage} alt="" className="h-full w-full rounded-full object-cover" /> : data.user.name.trim().charAt(0).toUpperCase() || "U"}
+              {data.user.profileImage ? <img src={data.user.profileImage} alt={`${data.user.name}'s profile`} className="h-full w-full rounded-full object-cover" /> : data.user.name.trim().charAt(0).toUpperCase() || "U"}
             </button>
           </div>
         </header>

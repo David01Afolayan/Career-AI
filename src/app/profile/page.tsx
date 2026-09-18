@@ -107,6 +107,7 @@ export default function ProfilePage() {
         throw new Error(data.error || "Failed to update profile");
       }
       setProfile(data.profile);
+      setProfileImage(data.profile.profileImage ?? null);
       setEditing(false);
       setMessage("Profile updated successfully.");
     } catch (saveError) {
@@ -187,7 +188,10 @@ export default function ProfilePage() {
               formData.append("image", file);
               const response = await fetch("/api/profile/image", { method: "POST", body: formData });
               const data = await response.json();
-              if (response.ok) setProfileImage(data.profileImage);
+              if (response.ok) {
+                setProfileImage(data.profileImage);
+                setProfile((currentProfile) => ({ ...currentProfile, profileImage: data.profileImage }));
+              }
               else setError(data.error || "Unable to upload profile image.");
               setUploadingImage(false);
               event.target.value = "";

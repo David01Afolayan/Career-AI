@@ -160,6 +160,7 @@ export async function PUT(request: Request) {
       profile: {
         name: result.user.name,
         email: result.user.email,
+        profileImage: result.user.profileImage,
         matricNumber: result.student.matricNumber,
         department: result.student.department,
         level: result.student.level,
