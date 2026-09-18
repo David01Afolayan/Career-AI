@@ -84,7 +84,7 @@ export default function DashboardPage() {
           <nav className="mt-6 space-y-2" aria-label="Student navigation">
             {[
               ["Dashboard", "/dashboard"],
-              ["Edit Profile", "/profile"],
+              ["Profile", "/profile"],
               ["Skill Assessment", "/assessment"],
               ["Assessment History", "/assessment/history"],
               ["Career Recommendations", "/ai-result"],
