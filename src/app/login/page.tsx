@@ -184,7 +184,7 @@ function LoginForm() {
               </div>
 
               <div className="mt-2 text-right">
-                <a href="/forgot-password" className="text-sm text-blue-400 hover:text-blue-300">
+                <a href={isAdminLogin ? "/forgot-password/admin" : "/forgot-password"} className="text-sm text-blue-400 hover:text-blue-300">
                   Forgot password?
                 </a>
               </div>

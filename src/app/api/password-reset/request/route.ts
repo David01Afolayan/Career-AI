@@ -9,21 +9,23 @@ const genericResponse = {
 };
 
 export async function POST(request: Request) {
-  const rateLimit = await checkRateLimit(`password-reset:${getClientIp(request)}`, 5, 15 * 60 * 1000);
-  if (!rateLimit.allowed) {
-    return NextResponse.json({ error: "Too many requests. Please try again later." }, {
-      status: 429,
-      headers: rateLimitResponse(rateLimit.resetAt),
-    });
-  }
-
   try {
+    const rateLimit = await checkRateLimit(`password-reset:${getClientIp(request)}`, 5, 15 * 60 * 1000);
+    if (!rateLimit.allowed) {
+      return NextResponse.json({ error: "Too many requests. Please try again later." }, {
+        status: 429,
+        headers: rateLimitResponse(rateLimit.resetAt),
+      });
+    }
+
     const body = await request.json();
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+    const adminReset = body.admin === true;
     if (!email) return NextResponse.json(genericResponse);
 
-    const user = await db.user.findUnique({ where: { email }, select: { id: true } });
+    const user = await db.user.findUnique({ where: { email }, select: { id: true, role: true } });
     if (!user) return NextResponse.json(genericResponse);
+    if (adminReset && user.role !== "ADMIN") return NextResponse.json(genericResponse);
 
     await db.passwordResetToken.deleteMany({ where: { userId: user.id } });
     const token = randomBytes(32).toString("hex");
@@ -36,7 +38,8 @@ export async function POST(request: Request) {
     });
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin;
-    const resetUrl = `${appUrl.replace(/\/$/, "")}/reset-password?token=${token}`;
+    const resetPath = adminReset ? "/reset-password/admin" : "/reset-password";
+    const resetUrl = `${appUrl.replace(/\/$/, "")}${resetPath}?token=${token}`;
     if (!isEmailDeliveryConfigured()) {
       if (process.env.NODE_ENV !== "production") {
         console.warn("SMTP is not configured; returning a development-only password reset URL.");
