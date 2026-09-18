@@ -123,26 +123,29 @@ const questions: QuestionSeed[] = [
   question("Problem Solving", "What does time complexity describe?", ["How running time grows with input size", "Monitor size", "Storage size", "Bandwidth only"], 0, "Time complexity relates runtime to input size.", "Intermediate"),
   question("Problem Solving", "Why decompose a large problem?", ["It makes analysis and solving easier", "It always slows code", "It removes testing", "It eliminates algorithms"], 0, "Decomposition makes complex problems manageable.", "Beginner"),
   question("Problem Solving", "What should you inspect after an unexpected algorithm result?", ["Inputs, logic, and intermediate results", "Ignore it", "Delete all code", "Change the computer"], 0, "Inspecting intermediate values helps locate errors.", "Intermediate"),
+
+  question("Docker", "A container works locally but cannot reach the database in production. What should you check first?", ["Container networking and environment variables", "The developer's monitor", "The CSS bundle", "The README title"], 0, "Production connectivity depends on container networking and correctly injected configuration.", "Intermediate"),
+  question("Docker", "Which practice keeps a production image smaller and safer?", ["Use a multi-stage build and a minimal base image", "Install every development tool in the final image", "Run all services as root", "Copy the entire repository including secrets"], 0, "Multi-stage builds and minimal images reduce attack surface and deployment size.", "Advanced"),
+  question("Docker", "An API container loses uploaded files after it is recreated. What is the correct solution?", ["Mount persistent storage or use object storage", "Disable container restarts", "Store files only in the image", "Increase the CSS cache"], 0, "Containers are ephemeral; persistent data requires volumes or external storage.", "Advanced"),
+  question("JavaScript", "A checkout button can be clicked twice before the first request finishes. What is the best prevention?", ["Disable or guard the action while the request is pending", "Add more console.log statements", "Reload the page after every click", "Use a random timeout"], 0, "Pending-state guards prevent duplicate submissions and duplicate transactions.", "Advanced"),
+  question("React", "A dashboard makes the same API request on every render. Which issue should you investigate first?", ["An effect dependency or state update causing a render loop", "The database column width", "The browser zoom level", "The HTML doctype"], 0, "Incorrect effect dependencies or state updates commonly trigger repeated requests.", "Advanced"),
+  question("Next.js", "A page contains private billing data. Where should the data request be performed?", ["On the server with authorization checks", "In a publicly exposed client-side constant", "Inside the CSS file", "In the page title"], 0, "Sensitive data should be fetched server-side and protected by authorization.", "Advanced"),
+  question("Node.js", "An API becomes slow when processing a large report. What is the first performance concern in Node.js?", ["Blocking the event loop with CPU-heavy synchronous work", "The color of the response button", "The URL length only", "The JSON indentation"], 0, "Synchronous CPU-heavy work blocks other requests from being served.", "Advanced"),
+  question("Python", "A production service must call a third-party API reliably. Which design is most appropriate?", ["Timeouts, retries with backoff, and structured error handling", "Retry forever without delay", "Ignore all response status codes", "Print the API key in every error"], 0, "Reliable integrations need bounded timeouts, controlled retries and safe error handling.", "Advanced"),
+  question("SQL", "A report query is slow because it filters millions of rows by email. What should you evaluate?", ["An index on the filtered column and the query plan", "Changing all values to uppercase manually", "Removing the WHERE clause", "Adding duplicate rows"], 0, "Indexes and query plans help determine whether the database can filter efficiently.", "Advanced"),
+  question("Cybersecurity", "A user reports an unfamiliar login from another country. What should the system do first?", ["Revoke suspicious sessions and require re-authentication", "Delete the user's account immediately", "Publish the login details", "Ignore the alert"], 0, "Containing potentially compromised sessions limits damage while the account is investigated.", "Advanced"),
+  question("Networking", "An application works by IP address but not by its domain name. Which service should you investigate?", ["DNS resolution", "GPU drivers", "Database indexes", "CSS compilation"], 0, "DNS maps domain names to IP addresses.", "Intermediate"),
+  question("Machine Learning", "A model scores 99% on training data but performs poorly on new users. What is the likely issue?", ["Overfitting", "Successful generalization", "A missing CSS class", "Database normalization"], 0, "A large train-test gap is a common sign of overfitting.", "Advanced"),
+  question("Data Analysis", "A product team asks why weekly sales dropped. What should an analyst do before proposing a cause?", ["Validate the data, comparison period, and possible collection changes", "Choose the most dramatic explanation", "Delete outliers without review", "Change the chart colors"], 0, "Reliable analysis starts by validating data quality and the comparison being made.", "Advanced"),
+  question("Git & GitHub", "A secret was accidentally committed to a public repository. What is the correct first response?", ["Revoke or rotate the secret, then remove it from repository history", "Only delete the local file", "Rename the branch", "Wait for the next release"], 0, "A leaked credential must be invalidated immediately; deleting a file alone does not revoke it.", "Advanced"),
+  question("Communication", "A stakeholder requests a feature that conflicts with the release deadline. What is the best response?", ["Clarify impact, trade-offs, and agree on a documented priority", "Promise everything without estimating", "Ignore the request", "Blame another team"], 0, "Clear trade-off communication supports realistic planning and shared decisions.", "Advanced"),
+  question("Problem Solving", "A bug cannot be reproduced consistently. What is the most useful next step?", ["Capture conditions, logs, inputs, and a minimal reproduction", "Rewrite the whole system", "Close the issue", "Change unrelated dependencies"], 0, "Reproduction conditions and evidence narrow the cause of intermittent failures.", "Advanced"),
 ];
 
 async function main() {
   console.log("Seeding expanded assessment question bank...");
 
   const existingQuestionCount = await prisma.assessmentQuestion.count();
-
-  if (existingQuestionCount >= 80) {
-    console.log(`ℹ️ ${existingQuestionCount} assessment questions already exist.`);
-    console.log("ℹ️ Skipping assessment question reset.");
-    return;
-  }
-
-  if (existingQuestionCount > 0) {
-    throw new Error(
-      "Assessment question bank is partially populated. Refusing to delete existing questions.",
-    );
-  }
-
-  console.log("🧹 Assessment question bank is empty.");
 
   const skills = await prisma.skill.findMany({
     select: { id: true, name: true },
@@ -156,8 +159,19 @@ async function main() {
     throw new Error(`Skills not found: ${missingSkills.join(", ")}`);
   }
 
+  const existingQuestions = await prisma.assessmentQuestion.findMany({
+    select: { question: true },
+  });
+  const existingQuestionTexts = new Set(existingQuestions.map((item) => item.question));
+  const newQuestions = questions.filter((item) => !existingQuestionTexts.has(item.question));
+
+  if (newQuestions.length === 0) {
+    console.log(`ℹ️ ${existingQuestionCount} assessment questions already exist.`);
+    return;
+  }
+
   await prisma.assessmentQuestion.createMany({
-    data: questions.map((item) => ({
+    data: newQuestions.map((item) => ({
       skillId: skillIds.get(item.skillName)!,
       question: item.question,
       options: item.options,
@@ -167,7 +181,7 @@ async function main() {
     })),
   });
 
-  console.log(`✅ ${questions.length} assessment questions created.`);
+  console.log(`✅ ${newQuestions.length} new assessment questions created.`);
   console.log("🎉 Assessment question bank completed.");
 }
 
