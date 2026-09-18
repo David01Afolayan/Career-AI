@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { Suspense } from "react";
-import { signIn } from "next-auth/react";
+import { getSession, signIn, signOut } from "next-auth/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 function LoginForm() {
@@ -36,6 +36,16 @@ function LoginForm() {
       setError("Invalid email or password.");
       setLoading(false);
       return;
+    }
+
+    if (isAdminLogin) {
+      const session = await getSession();
+      if (session?.user?.role !== "ADMIN") {
+        await signOut({ redirect: false });
+        setError("This account does not have administrator access.");
+        setLoading(false);
+        return;
+      }
     }
 
     router.push(isAdminLogin ? "/admin" : "/dashboard");
@@ -112,6 +122,8 @@ function LoginForm() {
 
               <input
                 type="email"
+                name={isAdminLogin ? "admin-email" : "email"}
+                autoComplete={isAdminLogin ? "username" : "email"}
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -128,6 +140,8 @@ function LoginForm() {
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
+                  name={isAdminLogin ? "admin-password" : "password"}
+                  autoComplete={isAdminLogin ? "current-password" : "current-password"}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
