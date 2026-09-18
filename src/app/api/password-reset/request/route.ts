@@ -2,6 +2,7 @@ import { createHash, randomBytes } from "crypto";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/security";
+import { sendPasswordResetEmail } from "@/lib/email";
 
 const genericResponse = {
   message: "If an account exists for that email, a password reset link has been created.",
@@ -34,12 +35,10 @@ export async function POST(request: Request) {
       },
     });
 
-    const resetUrl = `${new URL(request.url).origin}/reset-password?token=${token}`;
-    console.info("Password reset URL (configure email delivery before production):", resetUrl);
-    return NextResponse.json({
-      ...genericResponse,
-      ...(process.env.NODE_ENV !== "production" ? { resetUrl } : {}),
-    });
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin;
+    const resetUrl = `${appUrl.replace(/\/$/, "")}/reset-password?token=${token}`;
+    await sendPasswordResetEmail(email, resetUrl);
+    return NextResponse.json(genericResponse);
   } catch (error) {
     console.error("Password reset request error:", error);
     return NextResponse.json({ error: "Unable to process the request right now." }, { status: 503 });

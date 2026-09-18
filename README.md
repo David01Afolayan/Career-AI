@@ -29,6 +29,19 @@ A career guidance and skills recommendation platform for students and job seeker
 4. Start the app:
    npm run dev
 
+Password reset emails require SMTP configuration. Add these variables to `.env`
+or the deployment environment:
+
+```text
+SMTP_HOST="smtp.example.com"
+SMTP_PORT="587"
+SMTP_SECURE="false"
+SMTP_USER="your-mailbox@example.com"
+SMTP_PASSWORD="your-mailbox-password"
+SMTP_FROM="CareerAI <your-mailbox@example.com>"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+```
+
 To use AI recommendations locally, start the ML service in a second terminal from
 the `ml` directory:
 
@@ -48,6 +61,12 @@ This app is configured for Render using a Node web service.
    - `AUTH_SECRET` (generate a secure random value)
    - `AUTH_TRUST_HOST=true`
    - `NEXT_PUBLIC_APP_URL=https://your-render-domain.onrender.com`
+   - `SMTP_HOST`
+   - `SMTP_PORT`
+   - `SMTP_SECURE`
+   - `SMTP_USER`
+   - `SMTP_PASSWORD`
+   - `SMTP_FROM`
 3. Connect the GitHub repository and deploy the service.
 4. `render.yaml` creates both the Next.js app and the `career-ai-ml` service.
    Copy the generated `ML_API_KEY` from the ML service into the Next.js service.
