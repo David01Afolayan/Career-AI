@@ -3,11 +3,13 @@
 import { FormEvent, useState } from "react";
 import { Suspense } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 function LoginForm() {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
+  const isAdminLogin = pathname === "/login/admin";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -36,7 +38,7 @@ function LoginForm() {
       return;
     }
 
-    router.push("/dashboard");
+    router.push(isAdminLogin ? "/admin" : "/dashboard");
     router.refresh();
   }
 
@@ -49,7 +51,9 @@ function LoginForm() {
           </h1>
 
           <p className="mt-3 text-slate-400">
-            Login to continue your CareerAI journey.
+            {isAdminLogin
+              ? "Sign in to manage the CareerAI platform."
+              : "Login to continue your CareerAI journey."}
           </p>
         </div>
 
@@ -153,13 +157,14 @@ function LoginForm() {
           </div>
 
           <p className="mt-6 text-center text-sm text-slate-400">
-            Don't have an account?{" "}
-            <a
-              href="/register"
-              className="text-blue-400 hover:text-blue-300"
-            >
-              Create Account
-            </a>
+            {!isAdminLogin && (
+              <>
+                Don't have an account?{" "}
+                <a href="/register" className="text-blue-400 hover:text-blue-300">
+                  Create Account
+                </a>
+              </>
+            )}
           </p>
         </form>
       </div>
