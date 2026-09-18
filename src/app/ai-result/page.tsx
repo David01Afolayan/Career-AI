@@ -107,7 +107,17 @@ export default function AiResultPage() {
             role="alert"
             className="mt-6 rounded-xl border border-red-500/40 bg-red-500/10 p-4 text-center text-sm text-red-300"
           >
-            {error}
+            <p>{error}</p>
+            <p className="mt-2 text-red-200/80">
+              Complete a skill assessment to update your profile before
+              requesting a recommendation.
+            </p>
+            <Link
+              href="/assessment"
+              className="mt-4 inline-flex rounded-lg bg-red-400 px-4 py-2 font-semibold text-slate-950 transition hover:bg-red-300"
+            >
+              Take a Skill Test →
+            </Link>
           </div>
         )}
 
