@@ -117,12 +117,16 @@ export default function DashboardPage() {
           </nav>
           <button type="button" onClick={() => signOut({ callbackUrl: "/login" })} className="mt-8 w-full rounded-xl border border-red-500/40 px-4 py-3 text-left font-semibold text-red-300 hover:bg-red-500/10">Sign Out</button>
         </aside>
-        <header className="flex flex-col justify-between gap-5 md:flex-row md:items-center">
-          <div><p className="text-sm font-semibold uppercase tracking-wider text-blue-400">Student Dashboard</p><h1 className="mt-2 text-3xl font-bold sm:text-4xl">Welcome, {data.user.name}</h1><p className="mt-2 text-slate-400">Track your skills, assessments, recommendations and learning progress.</p></div>
-          <div className="flex items-center gap-3">
-            <button type="button" aria-label="Open profile navigation" onClick={() => setNavigationOpen(true)} className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-600 text-2xl font-bold text-white ring-2 ring-blue-400/40 transition hover:bg-blue-500">
-              {data.user.profileImage ? <img src={data.user.profileImage} alt={`${data.user.name}'s profile`} className="h-full w-full rounded-full object-cover" /> : data.user.name.trim().charAt(0).toUpperCase() || "U"}
-            </button>
+        <header className="flex flex-col gap-5">
+          <div className="max-w-4xl">
+            <p className="text-sm font-semibold uppercase tracking-wider text-blue-400">Student Dashboard</p>
+            <h1 className="mt-2 text-5xl font-bold leading-[0.95] tracking-[-0.04em] sm:text-6xl xl:text-7xl">Welcome, {data.user.name}</h1>
+            <p className="mt-3 max-w-3xl text-lg text-slate-400">Track your skills, assessments, recommendations and learning progress.</p>
+          </div>
+          <div className="flex justify-start">
+            <div className="flex h-36 w-36 items-center justify-center overflow-hidden rounded-full bg-blue-600 text-4xl font-bold text-white ring-4 ring-blue-400/40 shadow-lg shadow-blue-500/20 sm:h-40 sm:w-40">
+              {data.user.profileImage ? <img src={data.user.profileImage} alt={`${data.user.name}'s profile`} className="h-full w-full object-cover" /> : data.user.name.trim().charAt(0).toUpperCase() || "U"}
+            </div>
           </div>
         </header>
 

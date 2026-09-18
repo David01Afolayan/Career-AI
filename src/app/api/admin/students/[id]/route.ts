@@ -86,19 +86,41 @@ export async function DELETE(_request: Request, { params }: RouteContext) {
       return authResult.response;
     }
 
+    const { session } = authResult;
+
     const id = Number(params.id);
     if (!Number.isInteger(id)) {
       return NextResponse.json({ error: "Invalid student ID" }, { status: 400 });
     }
 
-    const student = await db.student.findUnique({ where: { id } });
+    const student = await db.student.findUnique({
+      where: { id },
+      include: { user: { select: { id: true, role: true } } },
+    });
+
     if (!student) {
       return NextResponse.json({ error: "Student not found" }, { status: 404 });
     }
 
-    await db.student.delete({ where: { id } });
+    if (student.user.role !== "STUDENT") {
+      return NextResponse.json({ error: "Only student accounts can be deleted from this endpoint." }, { status: 403 });
+    }
 
-    return NextResponse.json({ message: "Student deleted successfully." });
+    if (student.user.id === Number(session.user.id)) {
+      return NextResponse.json({ error: "You cannot delete your own admin account from this page." }, { status: 403 });
+    }
+
+    await db.$transaction(async (tx) => {
+      await tx.assessment.deleteMany({
+        where: { userId: student.userId },
+      });
+
+      await tx.user.delete({
+        where: { id: student.userId },
+      });
+    });
+
+    return NextResponse.json({ message: "Student account deleted successfully." });
   } catch (error) {
     console.error("Delete student error:", error);
     return NextResponse.json(

@@ -52,17 +52,21 @@ export async function POST() {
       );
     }
 
-    if (
-      !student.department ||
-      student.level === null ||
-      student.cgpa === null ||
-      !student.interests ||
-      student.skills.length < 3
-    ) {
+    const hasProfileData = Boolean(
+      student.department ||
+        student.level !== null ||
+        student.cgpa !== null ||
+        student.interests ||
+        student.skills.length > 0 ||
+        student.projects ||
+        student.certifications
+    );
+
+    if (!hasProfileData) {
       return NextResponse.json(
         {
           error:
-            "Please complete your profile and add at least 3 skills before requesting an AI career recommendation.",
+            "Please add a few profile details or skills before requesting an AI career recommendation.",
         },
         { status: 400 }
       );

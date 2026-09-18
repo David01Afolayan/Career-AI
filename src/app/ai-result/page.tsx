@@ -112,14 +112,14 @@ export default function AiResultPage() {
           >
             <p>{error}</p>
             <p className="mt-2 text-red-200/80">
-              Complete a skill assessment to update your profile before
-              requesting a recommendation.
+              You can still try a recommendation using your current profile and
+              skill information.
             </p>
             <Link
               href="/assessment"
               className="mt-4 inline-flex rounded-lg bg-red-400 px-4 py-2 font-semibold text-slate-950 transition hover:bg-red-300"
             >
-              Take a Skill Test →
+              Improve Profile →
             </Link>
           </div>
         )}
