@@ -84,7 +84,7 @@ export default function DashboardPage() {
           <nav className="mt-6 space-y-2" aria-label="Student navigation">
             {[
               ["Dashboard", "/dashboard"],
-              ["My Profile", "/profile"],
+              ["Edit Profile", "/profile"],
               ["Skill Assessment", "/assessment"],
               ["Assessment History", "/assessment/history"],
               ["Career Recommendations", "/ai-result"],
@@ -101,7 +101,6 @@ export default function DashboardPage() {
         <header className="flex flex-col justify-between gap-5 md:flex-row md:items-center">
           <div><p className="text-sm font-semibold uppercase tracking-wider text-blue-400">Student Dashboard</p><h1 className="mt-2 text-3xl font-bold sm:text-4xl">Welcome, {data.user.name}</h1><p className="mt-2 text-slate-400">Track your skills, assessments, recommendations and learning progress.</p></div>
           <div className="flex items-center gap-3">
-            <Link href="/profile" className="rounded-xl border border-slate-700 px-5 py-3 text-center font-semibold text-slate-300 hover:bg-slate-800">Edit Profile</Link>
             <button type="button" aria-label="Open profile navigation" onClick={() => setNavigationOpen(true)} className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-lg font-bold text-white ring-2 ring-blue-400/40 transition hover:bg-blue-500">
               {data.user.name.trim().charAt(0).toUpperCase() || "U"}
             </button>
