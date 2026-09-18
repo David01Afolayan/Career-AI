@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import BackButton from "@/components/BackButton";
+import StudentMenu from "@/components/StudentMenu";
 
 type Question = {
   id: string;
@@ -237,6 +238,7 @@ export default function AssessmentPage() {
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-white sm:px-6 lg:px-8">
       <div className="mx-auto max-w-4xl">
+        <div className="mb-4 flex justify-end"><StudentMenu /></div>
         <BackButton />
         <header className="mb-8">
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">

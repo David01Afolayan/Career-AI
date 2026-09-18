@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import StudentMenu from "@/components/StudentMenu";
 
 type SkillResult = { skillName: string; percentage: number };
 type Assessment = {
@@ -83,6 +84,7 @@ export default function AssessmentHistoryPage() {
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-10 text-white sm:px-6">
       <div className="mx-auto max-w-6xl">
+        <div className="mb-4 flex justify-end"><StudentMenu /></div>
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wider text-blue-400">CareerAI</p>

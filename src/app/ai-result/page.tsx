@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { BackIcon } from "@/components/BackButton";
+import StudentMenu from "@/components/StudentMenu";
 
 type Recommendation = {
   career: string;
@@ -55,6 +56,7 @@ export default function AiResultPage() {
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-10 text-white">
       <div className="mx-auto max-w-4xl">
+        <div className="mb-4 flex justify-end"><StudentMenu /></div>
         <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
           <Link
             href="/dashboard"

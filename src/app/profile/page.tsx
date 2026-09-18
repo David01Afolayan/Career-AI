@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import StudentMenu from "@/components/StudentMenu";
 
 type Profile = {
   name: string;
@@ -142,6 +143,7 @@ export default function ProfilePage() {
             CareerAI
           </Link>
           <div className="flex items-center gap-4">
+            <StudentMenu />
             <button
               type="button"
               onClick={() => setEditing(true)}

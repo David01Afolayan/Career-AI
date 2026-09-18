@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import StudentMenu from "@/components/StudentMenu";
 import { BackIcon } from "@/components/BackButton";
 
 type CareerMatch = {
@@ -72,6 +73,7 @@ export default function SkillGapPage() {
           <Link href="/" className="text-2xl font-bold">
             Career<span className="text-blue-400">AI</span>
           </Link>
+          <StudentMenu />
           <div className="flex items-center gap-4">
           </div>
         </div>

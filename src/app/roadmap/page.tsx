@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import StudentMenu from "@/components/StudentMenu";
 import { BackIcon } from "@/components/BackButton";
 
 type Resource = {
@@ -166,9 +167,7 @@ export default function RoadmapPage() {
             Career<span className="text-blue-400">AI</span>
           </Link>
           <div className="flex gap-4">
-            <Link href="/dashboard" className="rounded-lg px-4 py-2 text-sm text-slate-300 hover:text-white">
-              Dashboard
-            </Link>
+            <StudentMenu />
             <Link href="/skill-gap" className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold hover:bg-blue-500">
               Skill Gaps
             </Link>

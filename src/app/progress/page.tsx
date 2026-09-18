@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import StudentMenu from "@/components/StudentMenu";
 
 type Status = "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
 type Resource = {
@@ -124,6 +125,7 @@ export default function ProgressPage() {
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
           <Link href="/dashboard" className="text-2xl font-bold">Career<span className="text-blue-400">AI</span></Link>
           <div className="flex gap-4 text-sm text-slate-300">
+            <StudentMenu />
             <Link href="/roadmap" className="hover:text-white">Roadmap</Link>
             <Link href="/dashboard" className="hover:text-white">Dashboard</Link>
           </div>

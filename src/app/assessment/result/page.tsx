@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import StudentMenu from "@/components/StudentMenu";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -73,6 +74,7 @@ export default function AssessmentResultPage() {
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-10 text-white sm:px-6">
       <div className="mx-auto max-w-5xl">
+        <div className="mb-4 flex justify-end"><StudentMenu /></div>
         <div className="text-center">
           <div className="text-5xl">🎉</div>
           <p className="mt-4 text-sm font-semibold uppercase tracking-wider text-blue-400">Assessment Completed</p>

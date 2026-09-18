@@ -110,13 +110,6 @@ export default function DashboardPage() {
         <header className="flex flex-col justify-between gap-5 md:flex-row md:items-center">
           <div><p className="text-sm font-semibold uppercase tracking-wider text-blue-400">Student Dashboard</p><h1 className="mt-2 text-3xl font-bold sm:text-4xl">Welcome, {data.user.name}</h1><p className="mt-2 text-slate-400">Track your skills, assessments, recommendations and learning progress.</p></div>
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => signOut({ callbackUrl: "/login" })}
-              className="rounded-lg border border-red-500/40 px-4 py-2 text-sm font-semibold text-red-300 transition hover:bg-red-500/10 hover:text-red-200"
-            >
-              Logout
-            </button>
             <button type="button" aria-label="Open profile navigation" onClick={() => setNavigationOpen(true)} className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-600 text-2xl font-bold text-white ring-2 ring-blue-400/40 transition hover:bg-blue-500">
               {data.user.profileImage ? <img src={data.user.profileImage} alt={`${data.user.name}'s profile`} className="h-full w-full rounded-full object-cover" /> : data.user.name.trim().charAt(0).toUpperCase() || "U"}
             </button>
