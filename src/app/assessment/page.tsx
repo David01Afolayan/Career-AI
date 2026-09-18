@@ -51,8 +51,9 @@ export default function AssessmentPage() {
         const searchParams = new URLSearchParams(window.location.search);
         const skillId = searchParams.get("skillId");
         const track = searchParams.get("track");
-        if (skillId || track) {
-          await loadTest(skillId, track);
+        const field = searchParams.get("field");
+        if (skillId || track || field) {
+          await loadTest(skillId, track, field);
         }
       } catch {
         setError("Unable to connect to the server.");
@@ -63,11 +64,15 @@ export default function AssessmentPage() {
     loadSkills();
   }, []);
 
-  async function loadTest(skillId: string | null, track: string | null) {
+  async function loadTest(skillId: string | null, track: string | null, field: string | null) {
     setLoading(true);
     setError("");
     try {
-      const query = track ? `track=${encodeURIComponent(track)}` : `skillId=${encodeURIComponent(skillId || "")}`;
+      const query = track
+        ? `track=${encodeURIComponent(track)}`
+        : field
+          ? `field=${encodeURIComponent(field)}`
+          : `skillId=${encodeURIComponent(skillId || "")}`;
       const response = await fetch(`/api/assessment/questions?${query}`);
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to load skill test.");
@@ -141,7 +146,8 @@ export default function AssessmentPage() {
         setError(data.error || "Unable to submit assessment.");
         return;
       }
-      router.push(`/assessment/result?assessmentId=${data.assessmentId}`);
+      const fieldTest = new URLSearchParams(window.location.search).has("field");
+      router.push(`/assessment/result?assessmentId=${data.assessmentId}${fieldTest ? "&fieldTest=true" : ""}`);
     } catch {
       setError("Something went wrong while submitting your assessment.");
     } finally {
@@ -171,7 +177,15 @@ export default function AssessmentPage() {
           <div className="mt-8 space-y-8">
             {Array.from(new Set(skills.map((skill) => skill.field))).map((field) => (
               <section key={field}>
-                <h2 className="mb-3 text-lg font-semibold text-blue-300">{field}</h2>
+                <div className="mb-3 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                  <h2 className="text-lg font-semibold text-blue-300">{field}</h2>
+                  <Link
+                    href={`/assessment?field=${encodeURIComponent(field)}`}
+                    className="inline-flex w-fit rounded-lg border border-blue-400 px-4 py-2 text-sm font-semibold text-blue-300 hover:bg-blue-500/10"
+                  >
+                    Take {field} Test
+                  </Link>
+                </div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   {skills.filter((skill) => skill.field === field).map((skill) => (
                     <article

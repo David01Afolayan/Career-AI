@@ -19,6 +19,7 @@ type AssessmentResult = {
   correctCount: number;
   totalQuestions: number;
   skills: SkillResult[];
+  assessedField?: string | null;
   createdAt: string;
 };
 
@@ -63,6 +64,8 @@ export default function AssessmentResultPage() {
 
   const strongestSkill = result.skills[0];
   const weakestSkill = result.skills[result.skills.length - 1];
+  const fieldTest = searchParams.get("fieldTest") === "true";
+  const fieldPassed = fieldTest && result.assessedField && result.score >= 60;
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-10 text-white sm:px-6">
@@ -94,9 +97,20 @@ export default function AssessmentResultPage() {
         </section>
 
         <section className="mt-8 rounded-2xl border border-blue-500/20 bg-blue-500/5 p-6 text-center sm:p-8">
-          <h2 className="text-2xl font-bold">Ready to Discover Your Career Path?</h2>
-          <p className="mx-auto mt-2 max-w-2xl text-slate-400">CareerAI can now use your updated skill profile to generate an AI-powered career recommendation.</p>
-          <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row"><Link href="/ai-result" className="rounded-xl bg-blue-600 px-6 py-3 font-semibold hover:bg-blue-500">Get AI Career Recommendation →</Link><Link href="/dashboard" className="rounded-xl border border-slate-700 px-6 py-3 font-semibold text-slate-300 hover:bg-slate-800">Back to Dashboard</Link></div>
+          <h2 className="text-2xl font-bold">{!fieldTest || fieldPassed ? "You are ready to discover your career path" : "Build your foundation before career matching"}</h2>
+          <p className="mx-auto mt-2 max-w-2xl text-slate-400">
+            {!fieldTest
+              ? "CareerAI can now use your updated skill profile to generate an AI-powered career recommendation."
+              : fieldPassed
+              ? `Your ${result.assessedField} field test score meets the required 60% threshold.`
+              : "Your field test score is below the required 60% threshold. Complete the general assessment to build a broader skill profile."}
+          </p>
+          <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+            <Link href={fieldPassed ? "/ai-result" : "/assessment"} className="rounded-xl bg-blue-600 px-6 py-3 font-semibold hover:bg-blue-500">
+              {!fieldTest || fieldPassed ? "Get AI Career Recommendation →" : "Take General Assessment →"}
+            </Link>
+            <Link href="/dashboard" className="rounded-xl border border-slate-700 px-6 py-3 font-semibold text-slate-300 hover:bg-slate-800">Back to Dashboard</Link>
+          </div>
         </section>
       </div>
     </main>

@@ -48,6 +48,7 @@ export async function GET(
       const proficiency = percentage >= 80 ? "Professional" : percentage >= 60 ? "Advance" : percentage >= 40 ? "Intermediate" : "Beginner";
       return { ...skill, field: getSkillField(skill.skillName), percentage, proficiency };
     }).sort((a, b) => b.percentage - a.percentage);
+    const assessedFields = Array.from(new Set(skills.map((skill) => skill.field)));
 
     return NextResponse.json({
       assessmentId: assessment.id,
@@ -55,6 +56,7 @@ export async function GET(
       correctCount: assessment.questionAnswers.filter((answer) => answer.isCorrect).length,
       totalQuestions: assessment.questionAnswers.length,
       skills,
+      assessedField: assessedFields.length === 1 ? assessedFields[0] : null,
       createdAt: assessment.createdAt,
     });
   } catch (error) {

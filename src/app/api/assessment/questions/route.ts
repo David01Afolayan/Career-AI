@@ -80,6 +80,7 @@ export async function GET(request: Request) {
 
     const skillIdParam = new URL(request.url).searchParams.get("skillId");
     const track = new URL(request.url).searchParams.get("track");
+    const field = new URL(request.url).searchParams.get("field");
     const parsedSkillId = skillIdParam === null ? null : Number(skillIdParam);
     if (
       parsedSkillId !== null &&
@@ -94,7 +95,7 @@ export async function GET(request: Request) {
       orderBy: [{ category: "asc" }, { name: "asc" }],
     })).map((skill) => ({ ...skill, field: getSkillField(skill.name) }));
 
-    if (skillId === null && track !== "full-stack") {
+    if (skillId === null && !track && !field) {
       return NextResponse.json({
         skills,
         tracks: PROFESSIONAL_TRACKS,
@@ -107,6 +108,8 @@ export async function GET(request: Request) {
     const selectedSkills =
       selectedTrack
         ? skills.filter((skill) => selectedTrack.skills.includes(skill.name))
+        : field
+          ? skills.filter((skill) => skill.field === field)
         : skills.filter((skill) => skill.id === skillId);
 
     if (selectedSkills.length === 0) {
