@@ -194,12 +194,6 @@ export default function AssessmentPage() {
                     >
                       <span className="block font-semibold">{skill.name}</span>
                       <span className="mt-1 block text-sm text-slate-400">{skill.category}</span>
-                      <Link
-                        href={`/assessment?skillId=${skill.id}`}
-                        className="mt-4 inline-flex rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold hover:bg-blue-500"
-                      >
-                        Take Test
-                      </Link>
                     </article>
                   ))}
                 </div>
