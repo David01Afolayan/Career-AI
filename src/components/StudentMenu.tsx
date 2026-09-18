@@ -1,6 +1,6 @@
 "use client";
 
-import { signOut, useSession } from "next-auth/react";
+import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -26,10 +26,9 @@ const adminLinks = [
   ["Manage Resources", "/admin/resources"],
 ];
 
-export default function StudentMenu() {
+export default function StudentMenu({ role = "STUDENT" }: { role?: string }) {
   const [open, setOpen] = useState(false);
-  const { data: session } = useSession();
-  const isAdmin = session?.user?.role === "ADMIN";
+  const isAdmin = role === "ADMIN";
   const links = isAdmin ? adminLinks : studentLinks;
   const accentClasses = isAdmin
     ? {

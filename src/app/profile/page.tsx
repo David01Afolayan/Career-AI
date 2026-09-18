@@ -154,7 +154,7 @@ export default function ProfilePage() {
             CareerAI
           </Link>
           <div className="flex items-center gap-4">
-            <StudentMenu />
+            <StudentMenu role={profile.role} />
             <button
               type="button"
               onClick={() => setEditing(true)}
