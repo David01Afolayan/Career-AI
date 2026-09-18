@@ -14,6 +14,7 @@ model User {
   email        String   @unique
   passwordHash String
   adminKeyHash String? @unique
+  adminKeyFingerprint String? @unique
   profileImage  String?
   role         String   @default("STUDENT")
   createdAt    DateTime @default(now())

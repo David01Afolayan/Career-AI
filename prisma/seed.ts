@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { createHash } from "crypto";
 
 const db = new PrismaClient();
 
@@ -376,6 +377,7 @@ async function main() {
   const adminEmail =
     process.env.ADMIN_SEED_EMAIL || "admin@careerai.com";
   const adminPassword = await bcrypt.hash(adminSeedPassword, 12);
+  const adminKeyFingerprint = createHash("sha256").update(adminSeedKey).digest("hex");
 
   const admin = await db.user.upsert({
     where: {
@@ -384,6 +386,7 @@ async function main() {
     update: {
       role: "ADMIN",
       adminKeyHash: await bcrypt.hash(adminSeedKey, 12),
+      adminKeyFingerprint,
     },
     create: {
       name: "CareerAI Administrator",
@@ -391,6 +394,7 @@ async function main() {
       passwordHash: adminPassword,
       role: "ADMIN",
       adminKeyHash: await bcrypt.hash(adminSeedKey, 12),
+      adminKeyFingerprint,
     },
   });
 
