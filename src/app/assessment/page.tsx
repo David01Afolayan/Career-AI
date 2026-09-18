@@ -177,15 +177,7 @@ export default function AssessmentPage() {
           <div className="mt-8 space-y-8">
             {Array.from(new Set(skills.map((skill) => skill.field))).map((field) => (
               <section key={field}>
-                <div className="mb-3 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-                  <h2 className="text-lg font-semibold text-blue-300">{field}</h2>
-                  <Link
-                    href={`/assessment?field=${encodeURIComponent(field)}`}
-                    className="inline-flex w-fit rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-500"
-                  >
-                    Take Test
-                  </Link>
-                </div>
+                <h2 className="mb-3 text-lg font-semibold text-blue-300">{field}</h2>
                 <div className="grid gap-4 sm:grid-cols-2">
                   {skills.filter((skill) => skill.field === field).map((skill) => (
                     <article
@@ -197,6 +189,12 @@ export default function AssessmentPage() {
                     </article>
                   ))}
                 </div>
+                <Link
+                  href={`/assessment?field=${encodeURIComponent(field)}`}
+                  className="mt-4 inline-flex w-fit rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-500"
+                >
+                  Take Test
+                </Link>
               </section>
             ))}
           </div>
