@@ -179,14 +179,6 @@ export default function ProfilePage() {
                 <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z" />
               </svg>
             </button>
-            <Link href={homeHref} className="text-sm text-slate-300 hover:text-white">
-              <span className="inline-flex items-center gap-2">
-                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
-                  <path d="M19 12H5" />
-                  <path d="m12 19-7-7 7-7" />
-                </svg>
-              </span>
-            </Link>
           </div>
         </div>
       </nav>
