@@ -73,12 +73,6 @@ export default function SkillGapPage() {
             Career<span className="text-blue-400">AI</span>
           </Link>
           <div className="flex items-center gap-4">
-            <Link href="/dashboard" className="rounded-lg px-4 py-2 text-sm text-slate-300 hover:text-white">
-              Dashboard
-            </Link>
-            <Link href="/roadmap" className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold hover:bg-blue-500">
-              Learning Roadmap
-            </Link>
           </div>
         </div>
       </nav>
@@ -94,12 +88,6 @@ export default function SkillGapPage() {
                   <span className="inline-flex items-center gap-2"><BackIcon />Back to Dashboard</span>
                 </Link>
 
-                <Link
-                  href="/roadmap"
-                  className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500"
-                >
-                  View Learning Roadmap
-                </Link>
               </div>
 
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-400">
