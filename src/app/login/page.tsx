@@ -18,6 +18,7 @@ function LoginForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showAdminKey, setShowAdminKey] = useState(false);
 
   const registered = searchParams.get("registered");
   const reset = searchParams.get("reset");
@@ -192,16 +193,39 @@ function LoginForm() {
             {isAdminLogin && (
               <div>
                 <label className="mb-2 block text-sm text-slate-300">Administrator Key</label>
-                <input
-                  type="password"
-                  name="admin-key"
-                  autoComplete="off"
-                  required
-                  value={adminKey}
-                  onChange={(event) => setAdminKey(event.target.value)}
-                  placeholder="Enter your unique administrator key"
-                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-3 text-white outline-none focus:border-cyan-500"
-                />
+                <div className="relative">
+                  <input
+                    type={showAdminKey ? "text" : "password"}
+                    name="admin-key"
+                    autoComplete="off"
+                    required
+                    value={adminKey}
+                    onChange={(event) => setAdminKey(event.target.value)}
+                    placeholder="Enter your unique administrator key"
+                    className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-3 pr-12 text-white outline-none focus:border-cyan-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowAdminKey((visible) => !visible)}
+                    aria-label={showAdminKey ? "Hide administrator key" : "Show administrator key"}
+                    className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-slate-400 hover:text-white"
+                  >
+                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
+                      {showAdminKey ? (
+                        <>
+                          <path d="M3 3l18 18" />
+                          <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8" />
+                          <path d="M9.9 4.2A10.8 10.8 0 0 1 12 4c5 0 8.5 4 9.5 6a16.7 16.7 0 0 1-3.1 3.8" />
+                        </>
+                      ) : (
+                        <>
+                          <path d="M2.5 12S6 6 12 6s9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" />
+                          <circle cx="12" cy="12" r="2.5" />
+                        </>
+                      )}
+                    </svg>
+                  </button>
+                </div>
               </div>
             )}
 
