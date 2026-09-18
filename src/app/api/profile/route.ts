@@ -44,6 +44,11 @@ export async function GET() {
     const skills = await db.skill.findMany({
       orderBy: [{ category: "asc" }, { name: "asc" }],
     });
+    const assessedSkillRows = await db.assessmentAnswer.findMany({
+      where: { assessment: { userId } },
+      select: { question: { select: { skillId: true } } },
+      distinct: ["questionId"],
+    });
 
     return NextResponse.json({
       profile: {
@@ -60,6 +65,9 @@ export async function GET() {
         skills: student.skills,
       },
       skills,
+      assessedSkillIds: Array.from(
+        new Set(assessedSkillRows.map((row) => row.question.skillId))
+      ),
     });
   } catch (error) {
     console.error("Profile GET error:", error);

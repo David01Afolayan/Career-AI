@@ -43,6 +43,7 @@ export default function ProfilePage() {
     skills: [],
   });
   const [availableSkills, setAvailableSkills] = useState<AvailableSkill[]>([]);
+  const [assessedSkillIds, setAssessedSkillIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -64,6 +65,7 @@ export default function ProfilePage() {
           })),
         });
         setAvailableSkills(data.skills ?? []);
+        setAssessedSkillIds(data.assessedSkillIds ?? []);
       } catch (loadError) {
         setError(
           loadError instanceof Error ? loadError.message : "Failed to load profile"
@@ -214,7 +216,7 @@ export default function ProfilePage() {
                       <span>
                         <span className="block font-medium">{skill.name}</span>
                         <span className="text-xs text-slate-500">{skill.category}</span>
-                        {selected && (
+                        {selected && assessedSkillIds.includes(skill.id) && (
                           <span className="mt-1 block text-xs text-cyan-400">
                             Assessment result applied
                           </span>
