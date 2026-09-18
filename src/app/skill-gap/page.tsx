@@ -88,6 +88,12 @@ export default function SkillGapPage() {
                   <span className="inline-flex items-center gap-2"><BackIcon />Back to Dashboard</span>
                 </Link>
 
+                <Link
+                  href="/roadmap"
+                  className="inline-flex items-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500"
+                >
+                  View Learning Roadmap
+                </Link>
               </div>
 
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-400">
