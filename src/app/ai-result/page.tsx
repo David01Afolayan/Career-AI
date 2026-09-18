@@ -62,7 +62,7 @@ export default function AiResultPage() {
             href="/dashboard"
             className="inline-flex items-center rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 transition hover:border-blue-500 hover:text-white"
           >
-            <span className="inline-flex items-center gap-2"><BackIcon />Back to Dashboard</span>
+            <span className="inline-flex items-center gap-2"><BackIcon /></span>
           </Link>
 
           <Link
@@ -209,7 +209,7 @@ export default function AiResultPage() {
                 href="/dashboard"
                 className="inline-flex flex-1 items-center justify-center rounded-lg border border-slate-700 px-5 py-3 text-sm font-medium text-slate-300 transition hover:bg-slate-900 hover:text-white"
               >
-                Back to Dashboard
+                <BackIcon />
               </Link>
             </div>
           </div>

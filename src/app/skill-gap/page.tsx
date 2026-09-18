@@ -87,7 +87,7 @@ export default function SkillGapPage() {
                   href="/dashboard"
                   className="inline-flex items-center rounded-lg border border-white/10 px-4 py-2 text-sm font-medium text-slate-300 transition hover:border-blue-400 hover:text-blue-300"
                 >
-                  <span className="inline-flex items-center gap-2"><BackIcon />Back to Dashboard</span>
+                  <span className="inline-flex items-center gap-2"><BackIcon /></span>
                 </Link>
 
                 <Link

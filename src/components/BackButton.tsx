@@ -28,10 +28,11 @@ export default function BackButton({
     <Link
       href={href}
       aria-label={label}
-      className="mb-6 inline-flex items-center gap-2 rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 transition hover:border-cyan-400 hover:text-white"
+      title={label}
+      className="mb-6 inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-700 text-sm font-medium text-slate-300 transition hover:border-cyan-400 hover:text-white"
     >
       <BackIcon />
-      {label}
+      {label !== "Back to Dashboard" && label}
     </Link>
   );
 }
