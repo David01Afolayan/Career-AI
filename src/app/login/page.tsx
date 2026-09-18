@@ -16,6 +16,7 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
 
   const registered = searchParams.get("registered");
+  const reset = searchParams.get("reset");
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -59,6 +60,12 @@ function LoginForm() {
           {registered && (
             <div className="mb-5 rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
               Account created successfully. You can now login.
+            </div>
+          )}
+
+          {reset === "success" && (
+            <div className="mb-5 rounded-lg border border-green-500/30 bg-green-500/10 p-3 text-sm text-green-400">
+              Password reset successfully. You can now login.
             </div>
           )}
 
@@ -127,6 +134,12 @@ function LoginForm() {
                     )}
                   </svg>
                 </button>
+              </div>
+
+              <div className="mt-2 text-right">
+                <a href="/forgot-password" className="text-sm text-blue-400 hover:text-blue-300">
+                  Forgot password?
+                </a>
               </div>
             </div>
 
