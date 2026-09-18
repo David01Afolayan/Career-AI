@@ -46,6 +46,7 @@ export default function ProfilePage() {
   const [assessedSkillIds, setAssessedSkillIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -101,6 +102,7 @@ export default function ProfilePage() {
         throw new Error(data.error || "Failed to update profile");
       }
       setProfile(data.profile);
+      setEditing(false);
       setMessage("Profile updated successfully.");
     } catch (saveError) {
       setError(
@@ -127,11 +129,16 @@ export default function ProfilePage() {
             CareerAI
           </Link>
           <div className="flex items-center gap-4">
-            <Link
-              href="/profile"
+            <button
+              type="button"
+              onClick={() => setEditing(true)}
               aria-label="Edit profile"
               title="Edit profile"
-              className="rounded-lg bg-blue-600 p-2 text-white hover:bg-blue-500"
+              className={`rounded-lg p-2 text-white ${
+                editing
+                  ? "bg-cyan-500 text-slate-950"
+                  : "bg-blue-600 hover:bg-blue-500"
+              }`}
             >
               <svg
                 aria-hidden="true"
@@ -145,7 +152,7 @@ export default function ProfilePage() {
                 <path d="M12 20h9" />
                 <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z" />
               </svg>
-            </Link>
+            </button>
             <Link href="/dashboard" className="text-sm text-slate-300 hover:text-white">
               ← Back to Dashboard
             </Link>
@@ -185,26 +192,26 @@ export default function ProfilePage() {
 
         <form onSubmit={handleSubmit} className="space-y-8">
           <ProfileSection title="Personal Information">
-            <InputField label="Full Name" value={profile.name} onChange={(value) => updateField("name", value)} required />
+            <InputField label="Full Name" value={profile.name} onChange={(value) => updateField("name", value)} required editable={editing} />
             <InputField label="Email" value={profile.email} disabled />
-            <InputField label="Matric Number" value={profile.matricNumber || ""} onChange={(value) => updateField("matricNumber", value)} />
-            <InputField label="Department" value={profile.department || ""} onChange={(value) => updateField("department", value)} required />
+            <InputField label="Matric Number" value={profile.matricNumber || ""} onChange={(value) => updateField("matricNumber", value)} editable={editing} />
+            <InputField label="Department" value={profile.department || ""} onChange={(value) => updateField("department", value)} required editable={editing} />
           </ProfileSection>
 
           <ProfileSection title="Academic Information">
-            <InputField label="Level" type="number" value={profile.level ?? ""} onChange={(value) => updateField("level", value === "" ? null : Number(value))} min="100" max="700" />
-            <InputField label="CGPA" type="number" value={profile.cgpa ?? ""} onChange={(value) => updateField("cgpa", value === "" ? null : Number(value))} min="0" max="5" step="0.01" />
+            <InputField label="Level" type="number" value={profile.level ?? ""} onChange={(value) => updateField("level", value === "" ? null : Number(value))} min="100" max="700" editable={editing} />
+            <InputField label="CGPA" type="number" value={profile.cgpa ?? ""} onChange={(value) => updateField("cgpa", value === "" ? null : Number(value))} min="0" max="5" step="0.01" editable={editing} />
           </ProfileSection>
 
           <section className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
             <h2 className="mb-6 text-xl font-semibold">Professional Information</h2>
             <div className="mb-5 grid gap-5 md:grid-cols-2">
-              <InputField label="Number of Projects" type="number" value={profile.projects} onChange={(value) => updateField("projects", Number(value))} min="0" />
-              <InputField label="Number of Certifications" type="number" value={profile.certifications} onChange={(value) => updateField("certifications", Number(value))} min="0" />
+              <InputField label="Number of Projects" type="number" value={profile.projects} onChange={(value) => updateField("projects", Number(value))} min="0" editable={editing} />
+              <InputField label="Number of Certifications" type="number" value={profile.certifications} onChange={(value) => updateField("certifications", Number(value))} min="0" editable={editing} />
             </div>
             <div className="space-y-5">
-              <TextAreaField label="Career Interests" placeholder="e.g. Web development, AI, cybersecurity, cloud computing..." value={profile.interests || ""} onChange={(value) => updateField("interests", value)} />
-              <TextAreaField label="Experience" placeholder="Describe your internship, freelance work, jobs or other relevant experience..." value={profile.experience || ""} onChange={(value) => updateField("experience", value)} />
+              <TextAreaField label="Career Interests" placeholder="e.g. Web development, AI, cybersecurity, cloud computing..." value={profile.interests || ""} onChange={(value) => updateField("interests", value)} editable={editing} />
+              <TextAreaField label="Experience" placeholder="Describe your internship, freelance work, jobs or other relevant experience..." value={profile.experience || ""} onChange={(value) => updateField("experience", value)} editable={editing} />
             </div>
           </section>
 
@@ -226,6 +233,7 @@ export default function ProfilePage() {
                       <input
                         type="checkbox"
                         checked={Boolean(selected)}
+                        disabled={!editing}
                         onChange={(event) => {
                           const skills = event.target.checked
                             ? [...profile.skills, { skillId: skill.id, proficiencyLevel: 1 }]
@@ -247,6 +255,7 @@ export default function ProfilePage() {
                     {selected && (
                       <select
                         value={selected.proficiencyLevel}
+                        disabled={!editing}
                         onChange={(event) => {
                           const proficiencyLevel = Number(event.target.value);
                           updateField(
@@ -272,9 +281,11 @@ export default function ProfilePage() {
             </div>
           </section>
 
-          <button type="submit" disabled={saving} className="w-full rounded-xl bg-cyan-500 px-6 py-4 font-semibold text-slate-950 hover:bg-cyan-400 disabled:opacity-50">
-            {saving ? "Saving Profile..." : "Save Profile"}
-          </button>
+          {editing && (
+            <button type="submit" disabled={saving} className="w-full rounded-xl bg-cyan-500 px-6 py-4 font-semibold text-slate-950 hover:bg-cyan-400 disabled:opacity-50">
+              {saving ? "Saving Profile..." : "Save Profile"}
+            </button>
+          )}
         </form>
       </div>
     </main>
@@ -296,6 +307,7 @@ function InputField({
   onChange,
   type = "text",
   disabled = false,
+  editable = true,
   required = false,
   min,
   max,
@@ -306,6 +318,7 @@ function InputField({
   onChange?: (value: string) => void;
   type?: string;
   disabled?: boolean;
+  editable?: boolean;
   required?: boolean;
   min?: string;
   max?: string;
@@ -318,7 +331,7 @@ function InputField({
         type={type}
         value={value}
         onChange={(event) => onChange?.(event.target.value)}
-        disabled={disabled}
+        disabled={disabled || !editable}
         required={required}
         min={min}
         max={max}
@@ -334,11 +347,13 @@ function TextAreaField({
   placeholder,
   value,
   onChange,
+  editable = true,
 }: {
   label: string;
   placeholder: string;
   value: string;
   onChange: (value: string) => void;
+  editable?: boolean;
 }) {
   return (
     <div>
@@ -346,9 +361,10 @@ function TextAreaField({
       <textarea
         value={value}
         onChange={(event) => onChange(event.target.value)}
+        readOnly={!editable}
         placeholder={placeholder}
         rows={5}
-        className="w-full resize-none rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none placeholder:text-slate-600 focus:border-cyan-400"
+        className="w-full resize-none rounded-lg border border-slate-700 bg-slate-950 px-4 py-3 text-white outline-none placeholder:text-slate-600 read-only:opacity-70 focus:border-cyan-400"
       />
     </div>
   );
