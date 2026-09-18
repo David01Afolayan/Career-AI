@@ -19,6 +19,12 @@ type Skill = {
   field: string;
 };
 
+type Track = {
+  id: string;
+  name: string;
+  skills: string[];
+};
+
 export default function AssessmentPage() {
   const router = useRouter();
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -29,6 +35,8 @@ export default function AssessmentPage() {
   const [error, setError] = useState("");
   const [skills, setSkills] = useState<Skill[]>([]);
   const [selectedSkillId, setSelectedSkillId] = useState<number | null>(null);
+  const [tracks, setTracks] = useState<Track[]>([]);
+  const [selectedTrack, setSelectedTrack] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadSkills() {
@@ -40,6 +48,7 @@ export default function AssessmentPage() {
           return;
         }
         setSkills(data.skills || []);
+        setTracks(data.tracks || []);
       } catch {
         setError("Unable to connect to the server.");
       } finally {
@@ -50,16 +59,17 @@ export default function AssessmentPage() {
   }, []);
 
   async function startSkillTest() {
-    if (!selectedSkillId) {
+    if (!selectedSkillId && !selectedTrack) {
       setError("Select a skill to test before continuing.");
       return;
     }
     setLoading(true);
     setError("");
     try {
-      const response = await fetch(
-        `/api/assessment/questions?skillId=${selectedSkillId}`
-      );
+      const query = selectedTrack
+        ? `track=${selectedTrack}`
+        : `skillId=${selectedSkillId}`;
+      const response = await fetch(`/api/assessment/questions?${query}`);
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Unable to load skill test.");
       if (!data.questions?.length) throw new Error("No questions are available for this skill.");
@@ -168,7 +178,10 @@ export default function AssessmentPage() {
                     <button
                       key={skill.id}
                       type="button"
-                      onClick={() => setSelectedSkillId(skill.id)}
+                      onClick={() => {
+                        setSelectedSkillId(skill.id);
+                        setSelectedTrack(null);
+                      }}
                       className={`rounded-xl border p-5 text-left transition ${
                         selectedSkillId === skill.id
                           ? "border-blue-500 bg-blue-500/10"
@@ -183,11 +196,38 @@ export default function AssessmentPage() {
               </section>
             ))}
           </div>
+          {tracks.length > 0 && (
+            <section className="mt-8">
+              <h2 className="mb-3 text-lg font-semibold text-blue-300">Professional Career Tracks</h2>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {tracks.map((track) => (
+                  <button
+                    key={track.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedTrack(track.id);
+                      setSelectedSkillId(null);
+                    }}
+                    className={`rounded-xl border p-5 text-left transition ${
+                      selectedTrack === track.id
+                        ? "border-blue-500 bg-blue-500/10"
+                        : "border-slate-800 bg-slate-900 hover:border-slate-600"
+                    }`}
+                  >
+                    <span className="block font-semibold">{track.name}</span>
+                    <span className="mt-1 block text-sm text-slate-400">
+                      {track.skills.join(", ")}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
           {error && <p className="mt-5 text-sm text-red-300">{error}</p>}
           <button
             type="button"
             onClick={startSkillTest}
-            disabled={!selectedSkillId || loading}
+            disabled={(!selectedSkillId && !selectedTrack) || loading}
             className="mt-8 rounded-xl bg-blue-600 px-6 py-3 font-semibold hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? "Preparing test..." : "Start Skill Test"}
