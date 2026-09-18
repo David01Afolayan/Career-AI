@@ -18,6 +18,15 @@ function getMailTransport() {
   });
 }
 
+export function isEmailDeliveryConfigured() {
+  return Boolean(
+    process.env.SMTP_HOST &&
+      process.env.SMTP_USER &&
+      process.env.SMTP_PASSWORD &&
+      (process.env.SMTP_PORT || "587"),
+  );
+}
+
 export async function sendPasswordResetEmail(email: string, resetUrl: string) {
   const from = process.env.SMTP_FROM || process.env.SMTP_USER;
   if (!from) throw new Error("SMTP_FROM or SMTP_USER must be configured.");

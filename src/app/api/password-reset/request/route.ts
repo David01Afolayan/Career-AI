@@ -2,7 +2,7 @@ import { createHash, randomBytes } from "crypto";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/security";
-import { sendPasswordResetEmail } from "@/lib/email";
+import { isEmailDeliveryConfigured, sendPasswordResetEmail } from "@/lib/email";
 
 const genericResponse = {
   message: "If an account exists for that email, a password reset link has been created.",
@@ -37,6 +37,14 @@ export async function POST(request: Request) {
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || new URL(request.url).origin;
     const resetUrl = `${appUrl.replace(/\/$/, "")}/reset-password?token=${token}`;
+    if (!isEmailDeliveryConfigured()) {
+      if (process.env.NODE_ENV !== "production") {
+        console.warn("SMTP is not configured; returning a development-only password reset URL.");
+        return NextResponse.json({ ...genericResponse, resetUrl });
+      }
+      throw new Error("SMTP email delivery is not configured.");
+    }
+
     await sendPasswordResetEmail(email, resetUrl);
     return NextResponse.json(genericResponse);
   } catch (error) {
