@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { getSkillField } from "@/lib/skill-fields";
 
 export const dynamic = "force-dynamic";
 
@@ -60,11 +61,43 @@ export async function GET() {
             ? Math.round((skill.correct / skill.total) * 100)
             : 0,
         })),
+        assessedField: (() => {
+          const fields = Array.from(skillMap.values()).map((skill) => getSkillField(skill.skillName));
+          return new Set(fields).size === 1 ? fields[0] : null;
+        })(),
         createdAt: assessment.createdAt,
       };
     });
 
-    return NextResponse.json({ assessments: history });
+    const trend = [...history]
+      .reverse()
+      .map((assessment, index) => ({
+        attempt: index + 1,
+        assessmentId: assessment.id,
+        score: assessment.score,
+        date: assessment.createdAt,
+      }));
+    const scores = history.map((assessment) => assessment.score);
+    const latestScore = scores[0] ?? null;
+    const previousScore = scores[1] ?? null;
+    const firstScore = scores[scores.length - 1] ?? null;
+    const bestScore = scores.length ? Math.max(...scores) : null;
+
+    return NextResponse.json({
+      assessments: history,
+      analytics: {
+        totalAttempts: history.length,
+        latestScore,
+        previousScore,
+        scoreChange: latestScore !== null && previousScore !== null ? latestScore - previousScore : null,
+        overallChange: latestScore !== null && firstScore !== null ? latestScore - firstScore : null,
+        bestScore,
+        averageScore: scores.length
+          ? Math.round(scores.reduce((total, score) => total + score, 0) / scores.length)
+          : null,
+        trend,
+      },
+    });
   } catch (error) {
     console.error("Assessment history error:", error);
     return NextResponse.json(

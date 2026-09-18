@@ -3,6 +3,7 @@ import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
 import BackButton from "@/components/BackButton";
 import { db } from "@/lib/db";
+import CareerComparePicker from "@/components/CareerComparePicker";
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +45,7 @@ export default async function CareersPage() {
                 you can develop through your personalized roadmap.
               </p>
             </div>
+            <CareerComparePicker careers={careers.map((career) => ({ id: career.id, title: career.title }))} />
 
             {careers.length > 0 ? (
               <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">

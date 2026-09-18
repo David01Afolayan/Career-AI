@@ -103,6 +103,28 @@ export async function GET() {
           ) / totalResources
         )
       : 0;
+    const activeDates = new Set(
+      progressRecords
+        .filter((item) => item.status !== "NOT_STARTED")
+        .map((item) => item.updatedAt.toISOString().slice(0, 10))
+    );
+    const today = new Date();
+    const cursor = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+    const yesterday = new Date(cursor);
+    yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+    let currentStreak = 0;
+    if (activeDates.has(cursor.toISOString().slice(0, 10)) || activeDates.has(yesterday.toISOString().slice(0, 10))) {
+      if (!activeDates.has(cursor.toISOString().slice(0, 10))) cursor.setUTCDate(cursor.getUTCDate() - 1);
+      while (activeDates.has(cursor.toISOString().slice(0, 10))) {
+        currentStreak += 1;
+        cursor.setUTCDate(cursor.getUTCDate() - 1);
+      }
+    }
+    const weekStart = new Date(today);
+    weekStart.setDate(today.getDate() - today.getDay());
+    const weeklyCompletedResources = progressRecords.filter(
+      (item) => item.status === "COMPLETED" && item.updatedAt >= weekStart
+    ).length;
 
     const careerHistory = student.predictions.map((prediction) => ({
       id: prediction.id,
@@ -167,6 +189,9 @@ export async function GET() {
         completedResources,
         inProgressResources,
         progress: learningProgress,
+        weeklyGoal: student.weeklyLearningGoal,
+        weeklyCompletedResources,
+        currentStreak,
       },
       nextAction,
     });

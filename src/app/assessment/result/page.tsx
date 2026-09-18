@@ -66,6 +66,9 @@ export default function AssessmentResultPage() {
   const weakestSkill = result.skills[result.skills.length - 1];
   const fieldTest = searchParams.get("fieldTest") === "true";
   const fieldPassed = fieldTest && result.assessedField && result.score >= 60;
+  const retakeHref = result.assessedField
+    ? `/assessment?field=${encodeURIComponent(result.assessedField)}`
+    : "/assessment";
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-10 text-white sm:px-6">
@@ -106,8 +109,11 @@ export default function AssessmentResultPage() {
               : "Your field test score is below the required 60% threshold. Complete the general assessment to build a broader skill profile."}
           </p>
           <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+            <Link href={retakeHref} className="rounded-xl border border-cyan-500/50 px-6 py-3 font-semibold text-cyan-300 hover:bg-cyan-500/10">
+              Retake Assessment
+            </Link>
             <Link href={fieldPassed ? "/ai-result" : "/assessment"} className="rounded-xl bg-blue-600 px-6 py-3 font-semibold hover:bg-blue-500">
-              {!fieldTest || fieldPassed ? "Get AI Career Recommendation →" : "Take General Assessment →"}
+              {!fieldTest || fieldPassed ? "Update AI Career Recommendation →" : "Take General Assessment →"}
             </Link>
             <Link href="/profile" className="rounded-xl border border-cyan-500/50 px-6 py-3 font-semibold text-cyan-300 hover:bg-cyan-500/10">
               View Updated Skill Profile

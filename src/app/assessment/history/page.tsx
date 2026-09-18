@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 type SkillResult = { skillName: string; percentage: number };
 type Assessment = {
@@ -10,11 +11,24 @@ type Assessment = {
   correctCount: number;
   totalQuestions: number;
   skills: SkillResult[];
+  assessedField: string | null;
   createdAt: string;
+};
+
+type Analytics = {
+  totalAttempts: number;
+  latestScore: number | null;
+  previousScore: number | null;
+  scoreChange: number | null;
+  overallChange: number | null;
+  bestScore: number | null;
+  averageScore: number | null;
+  trend: { attempt: number; score: number; date: string }[];
 };
 
 export default function AssessmentHistoryPage() {
   const [assessments, setAssessments] = useState<Assessment[]>([]);
+  const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -30,6 +44,7 @@ export default function AssessmentHistoryPage() {
           return;
         }
         setAssessments(data.assessments || []);
+        setAnalytics(data.analytics || null);
       } catch {
         setError("Unable to connect to the server.");
       } finally {
@@ -63,8 +78,7 @@ export default function AssessmentHistoryPage() {
   }
 
   const latest = assessments[0];
-  const previous = assessments[1];
-  const improvement = latest && previous ? latest.score - previous.score : null;
+  const improvement = analytics?.scoreChange ?? null;
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-10 text-white sm:px-6">
@@ -88,33 +102,34 @@ export default function AssessmentHistoryPage() {
         ) : (
           <>
             <div className="mt-8 grid gap-6 md:grid-cols-3">
-              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6"><p className="text-sm text-slate-400">Assessments Completed</p><p className="mt-2 text-4xl font-bold">{assessments.length}</p></div>
-              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6"><p className="text-sm text-slate-400">Latest Score</p><p className="mt-2 text-4xl font-bold text-blue-400">{latest.score}%</p></div>
-              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6"><p className="text-sm text-slate-400">Score Change</p><p className={`mt-2 text-4xl font-bold ${improvement === null ? "text-slate-300" : improvement > 0 ? "text-green-400" : improvement < 0 ? "text-orange-400" : "text-slate-300"}`}>{improvement === null ? "—" : `${improvement > 0 ? "+" : ""}${improvement}%`}</p></div>
+              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6"><p className="text-sm text-slate-400">Attempts</p><p className="mt-2 text-4xl font-bold">{analytics?.totalAttempts ?? assessments.length}</p></div>
+              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6"><p className="text-sm text-slate-400">Latest Score</p><p className="mt-2 text-4xl font-bold text-blue-400">{analytics?.latestScore ?? latest.score}%</p><p className="mt-1 text-sm text-slate-500">Best: {analytics?.bestScore ?? latest.score}%</p></div>
+              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-6"><p className="text-sm text-slate-400">Improvement</p><p className={`mt-2 text-4xl font-bold ${improvement === null ? "text-slate-300" : improvement > 0 ? "text-green-400" : improvement < 0 ? "text-orange-400" : "text-slate-300"}`}>{improvement === null ? "—" : `${improvement > 0 ? "+" : ""}${improvement}%`}</p><p className="mt-1 text-sm text-slate-500">vs. previous attempt</p></div>
             </div>
 
+            {analytics && analytics.trend.length > 1 && (
+              <section className="mt-8 rounded-2xl border border-slate-800 bg-slate-900 p-6">
+                <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+                  <div><h2 className="text-2xl font-bold">Score Trend</h2><p className="mt-1 text-slate-400">See how your assessment performance changes over time.</p></div>
+                  <p className="text-sm text-slate-400">Overall change: <span className={analytics.overallChange && analytics.overallChange > 0 ? "text-green-400" : "text-slate-300"}>{analytics.overallChange === null ? "—" : `${analytics.overallChange > 0 ? "+" : ""}${analytics.overallChange}%`}</span></p>
+                </div>
+                <div className="mt-6 h-64 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={analytics.trend}><XAxis dataKey="attempt" stroke="#94a3b8" tickLine={false} /><YAxis domain={[0, 100]} stroke="#94a3b8" tickLine={false} /><Tooltip contentStyle={{ backgroundColor: "#0f172a", borderColor: "#334155" }} formatter={(value) => [`${value}%`, "Score"]} labelFormatter={(label) => `Attempt ${label}`} /><Line type="monotone" dataKey="score" stroke="#3b82f6" strokeWidth={3} dot={{ fill: "#3b82f6", r: 4 }} /></LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </section>
+            )}
+
             <section className="mt-8">
-              <h2 className="mb-5 text-2xl font-bold">Your Assessments</h2>
-              <div className="space-y-5">
-                {assessments.map((assessment, index) => (
-                  <div key={assessment.id} className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
-                    <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-                      <div>
-                        <div className="flex flex-wrap items-center gap-3">
-                          <h3 className="text-xl font-bold">Assessment #{assessments.length - index}</h3>
-                          {index === 0 && <span className="rounded-full bg-blue-500/10 px-3 py-1 text-xs font-semibold text-blue-400">Latest</span>}
-                        </div>
-                        <p className="mt-1 text-sm text-slate-500">{new Date(assessment.createdAt).toLocaleString()}</p>
-                      </div>
-                      <div className="text-left sm:text-right"><p className="text-3xl font-bold text-blue-400">{assessment.score}%</p><p className="text-sm text-slate-400">{assessment.correctCount}/{assessment.totalQuestions} correct</p></div>
-                    </div>
-                    <div className="mt-5 h-3 overflow-hidden rounded-full bg-slate-800"><div className="h-full rounded-full bg-blue-500" style={{ width: `${assessment.score}%` }} /></div>
-                    <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                      {assessment.skills.map((skill) => <div key={skill.skillName} className="rounded-xl bg-slate-950 p-4"><div className="flex justify-between gap-3"><span className="text-sm text-slate-300">{skill.skillName}</span><span className="text-sm font-bold text-blue-400">{skill.percentage}%</span></div><div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-800"><div className="h-full rounded-full bg-blue-500" style={{ width: `${skill.percentage}%` }} /></div></div>)}
-                    </div>
-                    <Link href={`/assessment/result?assessmentId=${assessment.id}`} className="mt-6 inline-block text-sm font-semibold text-blue-400 hover:text-blue-300">View Full Result →</Link>
-                  </div>
-                ))}
+              <h2 className="mb-5 text-2xl font-bold">Assessment Attempts</h2>
+              <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900">
+                <table className="w-full min-w-[680px] text-left text-sm"><thead className="border-b border-slate-800 text-slate-400"><tr><th className="px-5 py-4">Attempt</th><th className="px-5 py-4">Date</th><th className="px-5 py-4">Score</th><th className="px-5 py-4">Change</th><th className="px-5 py-4 text-right">Actions</th></tr></thead><tbody>
+                  {assessments.map((assessment, index) => {
+                    const change = index < assessments.length - 1 ? assessment.score - assessments[index + 1].score : null;
+                    return <tr key={assessment.id} className="border-b border-slate-800 last:border-0"><td className="px-5 py-4 font-semibold">#{assessments.length - index}{index === 0 && <span className="ml-2 rounded-full bg-blue-500/10 px-2 py-1 text-xs text-blue-400">Latest</span>}</td><td className="px-5 py-4 text-slate-400">{new Date(assessment.createdAt).toLocaleString()}</td><td className="px-5 py-4 font-bold text-blue-400">{assessment.score}%</td><td className={`px-5 py-4 ${change !== null && change > 0 ? "text-green-400" : "text-slate-400"}`}>{change === null ? "—" : `${change > 0 ? "+" : ""}${change}%`}</td><td className="px-5 py-4 text-right"><Link href={`/assessment/result?assessmentId=${assessment.id}`} className="mr-4 text-blue-400 hover:text-blue-300">View</Link><Link href={assessment.assessedField ? `/assessment?field=${encodeURIComponent(assessment.assessedField)}` : "/assessment"} className="text-cyan-300 hover:text-cyan-200">Retake</Link></td></tr>;
+                  })}
+                </tbody></table>
               </div>
             </section>
           </>
@@ -123,7 +138,7 @@ export default function AssessmentHistoryPage() {
         <div className="mt-10 flex flex-wrap gap-3">
           <Link href="/dashboard" className="rounded-xl border border-slate-700 px-5 py-3 font-semibold text-slate-300 hover:bg-slate-800">← Dashboard</Link>
           <Link href="/skill-gap" className="rounded-xl border border-slate-700 px-5 py-3 font-semibold text-slate-300 hover:bg-slate-800">View Skill Gap</Link>
-          <Link href="/ai-result" className="rounded-xl bg-blue-600 px-5 py-3 font-semibold hover:bg-blue-500">AI Career Recommendation →</Link>
+          <Link href="/ai-result" className="rounded-xl bg-blue-600 px-5 py-3 font-semibold hover:bg-blue-500">Update AI Career Recommendation →</Link>
         </div>
       </div>
     </main>

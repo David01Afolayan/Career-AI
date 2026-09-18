@@ -43,6 +43,8 @@ model Assessment {
   recommendations String?
   createdAt       DateTime           @default(now())
   questionAnswers AssessmentAnswer[]
+
+  @@index([userId, createdAt])
 }
 
 model AssessmentQuestion {
@@ -82,6 +84,7 @@ model Career {
   salaryRange    String?
   predictions    Prediction[]
   skills         CareerSkill[]
+  comparisons    CareerComparison[]
 }
 
 model Prediction {
@@ -126,6 +129,8 @@ model LearningResource {
   resourceType String
   difficulty   String
   progress     Progress[]
+  ratings      ResourceRating[]
+  bookmarks    ResourceBookmark[]
 }
 
 model Student {
@@ -143,8 +148,13 @@ model Student {
   experience     String?
   projects       Int            @default(0)
   certifications Int            @default(0)
+  weeklyLearningGoal Int        @default(5)
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
+  careerComparisons CareerComparison[]
+  resourceRatings   ResourceRating[]
+  resourceBookmarks ResourceBookmark[]
+  notifications     Notification[]
 }
 
 model StudentSkill {
@@ -175,6 +185,58 @@ model Progress {
   resource             LearningResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, resourceId])
+}
+
+model CareerComparison {
+  id        String   @id @default(cuid())
+  studentId Int
+  careerId  Int
+  createdAt DateTime @default(now())
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  career    Career   @relation(fields: [careerId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, careerId])
+  @@index([studentId, createdAt])
+}
+
+model ResourceRating {
+  id         String           @id @default(cuid())
+  studentId  Int
+  resourceId String
+  rating     Int
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  student    Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  resource   LearningResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, resourceId])
+  @@index([resourceId])
+}
+
+model ResourceBookmark {
+  id         String           @id @default(cuid())
+  studentId  Int
+  resourceId String
+  createdAt  DateTime         @default(now())
+  student    Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  resource   LearningResource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, resourceId])
+  @@index([studentId, createdAt])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  studentId Int
+  title     String
+  message   String
+  type      String   @default("PROGRESS")
+  readAt   DateTime?
+  createdAt DateTime @default(now())
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, createdAt])
+  @@index([studentId, readAt])
 }
 
 model RateLimit {
