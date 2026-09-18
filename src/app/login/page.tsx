@@ -4,7 +4,6 @@ import { FormEvent, useState } from "react";
 import { Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import BackButton from "@/components/BackButton";
 
 function LoginForm() {
   const router = useRouter();
@@ -42,7 +41,6 @@ function LoginForm() {
   return (
     <main className="min-h-screen bg-slate-950 flex items-center justify-center px-6">
       <div className="w-full max-w-md">
-        <BackButton href="/" label="Back to Home" />
         <div className="mb-8 text-center">
           <h1 className="text-4xl font-bold text-white">
             Welcome Back
