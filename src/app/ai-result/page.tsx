@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { BackIcon } from "@/components/BackButton";
 
 type Recommendation = {
   career: string;
@@ -59,7 +60,7 @@ export default function AiResultPage() {
             href="/dashboard"
             className="inline-flex items-center rounded-lg border border-slate-700 px-4 py-2 text-sm font-medium text-slate-300 transition hover:border-blue-500 hover:text-white"
           >
-            ← Back to Dashboard
+            <span className="inline-flex items-center gap-2"><BackIcon />Back to Dashboard</span>
           </Link>
 
           <Link

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { BackIcon } from "@/components/BackButton";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -65,7 +66,7 @@ export default function CareerDetailsPage() {
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-white sm:px-8">
       <div className="mx-auto max-w-6xl">
-        <Link href="/careers" className="text-sm text-cyan-400 hover:text-cyan-300">← Back to Careers</Link>
+        <Link href="/careers" className="inline-flex items-center gap-2 text-sm text-cyan-400 hover:text-cyan-300"><BackIcon />Back to Careers</Link>
         <section className="mt-5 rounded-3xl border border-slate-800 bg-slate-900 p-8">
           <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
             <div>
