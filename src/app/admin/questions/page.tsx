@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import BackButton from "@/components/BackButton";
 import StudentMenu from "@/components/StudentMenu";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
@@ -114,7 +113,6 @@ export default function AdminQuestionsPage() {
 
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-10 text-white">
-        <BackButton href="/admin" label="Back to Admin Dashboard" />
       <div className="mx-auto max-w-7xl">
         <div className="mb-6 flex items-center justify-between">
           <Link href="/admin" className="text-sm text-cyan-400">← Admin Dashboard</Link>
