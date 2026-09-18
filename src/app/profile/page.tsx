@@ -144,11 +144,13 @@ export default function ProfilePage() {
     );
   }
 
+  const homeHref = profile.role === "ADMIN" ? "/admin" : "/dashboard";
+
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       <nav className="border-b border-slate-800 bg-slate-950/90">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link href="/dashboard" className="text-2xl font-bold text-cyan-400">
+          <Link href={homeHref} className="text-2xl font-bold text-cyan-400">
             CareerAI
           </Link>
           <div className="flex items-center gap-4">
@@ -177,7 +179,7 @@ export default function ProfilePage() {
                 <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z" />
               </svg>
             </button>
-            <Link href="/dashboard" className="text-sm text-slate-300 hover:text-white">
+            <Link href={homeHref} className="text-sm text-slate-300 hover:text-white">
               <span className="inline-flex items-center gap-2">
                 <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
                   <path d="M19 12H5" />
