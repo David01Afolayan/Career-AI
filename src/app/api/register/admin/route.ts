@@ -7,12 +7,10 @@ import { registrationSchema } from "@/lib/validation";
 export async function POST(request: Request) {
   try {
     const session = await auth();
-    const setupKey = process.env.ADMIN_SETUP_KEY;
-    const providedKey = request.headers.get("x-admin-setup-key");
     const authorizedAdmin = session?.user?.role === "ADMIN";
 
-    if (!authorizedAdmin && (!setupKey || !providedKey || providedKey !== setupKey)) {
-      return NextResponse.json({ error: "Administrator setup authorization is required." }, { status: 403 });
+    if (!authorizedAdmin) {
+      return NextResponse.json({ error: "Sign in as an administrator before creating another admin account." }, { status: 403 });
     }
 
     const body: unknown = await request.json();

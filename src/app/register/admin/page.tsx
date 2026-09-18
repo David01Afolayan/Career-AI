@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 export default function AdminRegisterPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ name: "", email: "", password: "", setupKey: "" });
+  const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -17,8 +17,8 @@ export default function AdminRegisterPage() {
     try {
       const response = await fetch("/api/register/admin", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-admin-setup-key": form.setupKey },
-        body: JSON.stringify({ name: form.name, email: form.email, password: form.password }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
       });
       const data = await response.json();
       if (!response.ok) {
@@ -43,7 +43,7 @@ export default function AdminRegisterPage() {
             <p className="mt-5 max-w-md leading-7 text-slate-400">Administrator accounts can manage the platform and its learning data.</p>
           </div>
           <p className="rounded-2xl border border-cyan-400/20 bg-cyan-400/5 p-5 text-sm text-slate-400">
-            This page requires an administrator session or the configured administrator setup key.
+            Sign in as an existing administrator before creating another administrator account.
           </p>
         </section>
 
@@ -56,7 +56,6 @@ export default function AdminRegisterPage() {
               ["name", "Full Name", "Administrator name", "text"],
               ["email", "Email", "admin@example.com", "email"],
               ["password", "Password", "At least 8 characters", "password"],
-              ["setupKey", "Setup Key", "Required for initial setup", "password"],
             ].map(([name, label, placeholder, type]) => (
               <div key={name}>
                 <label className="mb-2 block text-sm text-slate-300">{label}</label>
