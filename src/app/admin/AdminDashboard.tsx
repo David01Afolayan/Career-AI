@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import StudentMenu from "@/components/StudentMenu";
+import ThemeToggle from "@/components/ThemeToggle";
 import {
   ResponsiveContainer,
   BarChart,
@@ -25,6 +26,7 @@ type Statistics = {
 };
 
 export default function AdminDashboard() {
+  const [lightTheme, setLightTheme] = useState(false);
   const [stats, setStats] = useState<Statistics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -74,11 +76,12 @@ export default function AdminDashboard() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
+    <main className={`min-h-screen bg-slate-950 text-white ${lightTheme ? "admin-light" : ""}`}>
       <nav className="border-b border-slate-800">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <Link href="/admin" className="text-2xl font-bold text-cyan-400">CareerAI</Link>
           <div className="flex items-center gap-4">
+            <ThemeToggle onThemeChange={setLightTheme} />
             <StudentMenu role="ADMIN" />
             <Link href="/dashboard" className="text-sm text-slate-300 hover:text-white">Student View</Link>
           </div>
