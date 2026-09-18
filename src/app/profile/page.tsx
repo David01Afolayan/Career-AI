@@ -180,22 +180,40 @@ export default function ProfilePage() {
           <div>
             <h2 className="text-xl font-semibold">Profile Picture</h2>
             <p className="mt-1 text-sm text-slate-400">JPG, PNG, or WebP up to 2 MB.</p>
-            {editing && <input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploadingImage} onChange={async (event) => {
-              const file = event.target.files?.[0];
-              if (!file) return;
-              setUploadingImage(true);
-              const formData = new FormData();
-              formData.append("image", file);
-              const response = await fetch("/api/profile/image", { method: "POST", body: formData });
-              const data = await response.json();
-              if (response.ok) {
-                setProfileImage(data.profileImage);
-                setProfile((currentProfile) => ({ ...currentProfile, profileImage: data.profileImage }));
-              }
-              else setError(data.error || "Unable to upload profile image.");
-              setUploadingImage(false);
-              event.target.value = "";
-            }} className="mt-3 block text-sm text-slate-300" />}
+            {editing && (
+              <label className={`mt-3 inline-flex cursor-pointer items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-500 ${uploadingImage ? "cursor-not-allowed opacity-50" : ""}`}>
+                <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+                  <path d="M12 16V4" />
+                  <path d="m7 9 5-5 5 5" />
+                  <path d="M5 20h14" />
+                </svg>
+                {uploadingImage ? "Uploading..." : "Upload Image"}
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  disabled={uploadingImage}
+                  onChange={async (event) => {
+                    const file = event.target.files?.[0];
+                    if (!file) return;
+                    setUploadingImage(true);
+                    setError("");
+                    const formData = new FormData();
+                    formData.append("image", file);
+                    const response = await fetch("/api/profile/image", { method: "POST", body: formData });
+                    const data = await response.json();
+                    if (response.ok) {
+                      setProfileImage(data.profileImage);
+                      setProfile((currentProfile) => ({ ...currentProfile, profileImage: data.profileImage }));
+                    } else {
+                      setError(data.error || "Unable to upload profile image.");
+                    }
+                    setUploadingImage(false);
+                    event.target.value = "";
+                  }}
+                  className="sr-only"
+                />
+              </label>
+            )}
           </div>
         </section>
         <div className="mb-8">
