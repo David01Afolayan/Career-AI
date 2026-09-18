@@ -11,7 +11,8 @@ type Resource = {
   url: string;
   resourceType: string;
   difficulty: string;
-  progressStatus?: string;
+  progressStatus: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
+  completionPercentage: number;
 };
 
 type RoadmapItem = {
@@ -21,6 +22,7 @@ type RoadmapItem = {
   gap: number;
   importance: number;
   resources: Resource[];
+  learningProgress: number;
 };
 
 type RoadmapData = {
@@ -32,6 +34,12 @@ type RoadmapData = {
     requiredLevel: number;
   }[];
   totalLearningAreas: number;
+  overallLearningProgress: number;
+  learningSummary: {
+    totalResources: number;
+    completedResources: number;
+    inProgressResources: number;
+  };
 };
 
 function levelName(level: number) {
@@ -198,19 +206,43 @@ export default function RoadmapPage() {
           </div>
         </div>
 
+        <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-bold">Your real learning progress</h2>
+              <p className="mt-1 text-sm text-slate-400">
+                Based on the learning resources you have started and completed.
+              </p>
+            </div>
+            <span className="text-2xl font-bold text-blue-400">
+              {data.overallLearningProgress}%
+            </span>
+          </div>
+          <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-800">
+            <div
+              className="h-full rounded-full bg-blue-500 transition-all"
+              style={{ width: `${data.overallLearningProgress}%` }}
+            />
+          </div>
+          <div className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
+            <span className="rounded-lg bg-slate-950 p-3 text-slate-300">
+              Resources: <strong className="text-white">{data.learningSummary.totalResources}</strong>
+            </span>
+            <span className="rounded-lg bg-slate-950 p-3 text-slate-300">
+              Completed: <strong className="text-green-300">{data.learningSummary.completedResources}</strong>
+            </span>
+            <span className="rounded-lg bg-slate-950 p-3 text-slate-300">
+              In progress: <strong className="text-yellow-300">{data.learningSummary.inProgressResources}</strong>
+            </span>
+          </div>
+        </div>
+
         <div className="mt-10">
           <h2 className="text-2xl font-bold text-white">
             Recommended Learning Path
           </h2>
           <div className="mt-6 space-y-6">
             {data.roadmap.map((item, index) => {
-              const progress = item.requiredLevel
-                ? Math.min(
-                    Math.round((item.currentLevel / item.requiredLevel) * 100),
-                    100
-                  )
-                : 0;
-
               return (
                 <div key={item.skill} className="rounded-3xl border border-white/10 bg-slate-900 p-7">
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -233,12 +265,12 @@ export default function RoadmapPage() {
                   <div className="mt-6">
                     <div className="mb-2 flex justify-between text-sm">
                       <span className="text-slate-400">Current progress</span>
-                      <span className="font-semibold">{progress}%</span>
+                      <span className="font-semibold">{item.learningProgress}%</span>
                     </div>
                     <div className="h-3 overflow-hidden rounded-full bg-slate-800">
                       <div
                         className="h-full rounded-full bg-blue-600"
-                        style={{ width: `${progress}%` }}
+                        style={{ width: `${item.learningProgress}%` }}
                       />
                     </div>
                   </div>
@@ -258,7 +290,7 @@ export default function RoadmapPage() {
                                 {resource.difficulty}
                               </span>
                             </div>
-                            {resource.progressStatus && (
+                            {resource.progressStatus !== "NOT_STARTED" && (
                               <span
                                 className={`mt-3 inline-block rounded-full px-3 py-1 text-xs font-semibold ${
                                   resource.progressStatus ===
@@ -267,10 +299,9 @@ export default function RoadmapPage() {
                                     : "bg-yellow-400/10 text-yellow-300"
                                 }`}
                               >
-                                {resource.progressStatus ===
-                                "COMPLETED"
+                                {resource.progressStatus === "COMPLETED"
                                   ? "✓ Completed"
-                                  : "● In Progress"}
+                                  : `● ${resource.completionPercentage}% In Progress`}
                               </span>
                             )}
                             <p className="mt-2 text-sm leading-6 text-slate-400">

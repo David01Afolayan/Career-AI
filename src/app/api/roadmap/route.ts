@@ -142,6 +142,7 @@ export async function GET() {
             return {
               ...resource,
               progressStatus: progress?.status ?? "NOT_STARTED",
+              completionPercentage: progress?.completionPercentage ?? 0,
             };
           })
         );
@@ -150,9 +151,27 @@ export async function GET() {
           ...prioritySkill,
           skillId: skill?.id ?? null,
           resources: resourcesWithProgress,
+          learningProgress: resourcesWithProgress.length
+            ? Math.round(
+                resourcesWithProgress.reduce(
+                  (total, resource) => total + resource.completionPercentage,
+                  0
+                ) / resourcesWithProgress.length
+              )
+            : 0,
         };
       })
     );
+
+    const learningResources = roadmap.flatMap((item) => item.resources);
+    const overallLearningProgress = learningResources.length
+      ? Math.round(
+          learningResources.reduce(
+            (total, resource) => total + resource.completionPercentage,
+            0
+          ) / learningResources.length
+        )
+      : 0;
 
     const completedSkills = selectedCareer.requiredSkills
       .map((skill) => ({
@@ -172,6 +191,16 @@ export async function GET() {
       roadmap,
       completedSkills,
       totalLearningAreas: roadmap.length,
+      overallLearningProgress,
+      learningSummary: {
+        totalResources: learningResources.length,
+        completedResources: learningResources.filter(
+          (resource) => resource.progressStatus === "COMPLETED"
+        ).length,
+        inProgressResources: learningResources.filter(
+          (resource) => resource.progressStatus === "IN_PROGRESS"
+        ).length,
+      },
     });
   } catch (error) {
     console.error("Roadmap error:", error);
