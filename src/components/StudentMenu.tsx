@@ -9,6 +9,7 @@ const studentLinks = [
   ["Profile", "/profile"],
   ["Skill Assessment", "/assessment"],
   ["Assessment History", "/assessment/history"],
+  ["Field Tests Taken", "/assessment/field-tests"],
   ["Career Recommendations", "/ai-result"],
   ["Careers", "/careers"],
   ["Skill Gap", "/skill-gap"],

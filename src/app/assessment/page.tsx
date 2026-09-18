@@ -152,7 +152,10 @@ export default function AssessmentPage() {
         setError(data.error || "Unable to submit assessment.");
         return;
       }
-      const fieldTest = new URLSearchParams(window.location.search).has("field");
+      const submittedTestParams = new URLSearchParams(window.location.search);
+      const fieldTest = ["field", "track", "skillId"].some((parameter) =>
+        submittedTestParams.has(parameter)
+      );
       router.push(`/assessment/result?assessmentId=${data.assessmentId}${fieldTest ? "&fieldTest=true" : ""}`);
     } catch {
       setError("Something went wrong while submitting your assessment.");

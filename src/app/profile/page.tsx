@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import StudentMenu from "@/components/StudentMenu";
 
@@ -64,41 +64,61 @@ export default function ProfilePage() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
 
+  const loadProfile = useCallback(async (showLoading = true) => {
+    if (showLoading) setLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch("/api/profile", { cache: "no-store" });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to load profile");
+      }
+      const assessedIds = new Set<number>(data.assessedSkillIds ?? []);
+      setProfile({
+        ...data.profile,
+        skills: (data.profile.skills ?? [])
+          .map((skill: StudentSkill & { skill?: { id: number } }) => ({
+            skillId: skill.skillId ?? skill.skill?.id,
+            proficiencyLevel: skill.proficiencyLevel,
+          }))
+          .filter((skill: StudentSkill) => assessedIds.has(skill.skillId)),
+      });
+      setAvailableSkills(
+        (data.skills ?? []).filter((skill: AvailableSkill) =>
+          assessedIds.has(skill.id)
+        )
+      );
+      setProfileImage(data.profile.profileImage ?? null);
+      setAssessedSkillIds(Array.from(assessedIds));
+    } catch (loadError) {
+      setError(
+        loadError instanceof Error ? loadError.message : "Failed to load profile"
+      );
+    } finally {
+      if (showLoading) setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    async function loadProfile() {
-      try {
-        const response = await fetch("/api/profile");
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.error || "Failed to load profile");
-        }
-        const assessedIds = new Set<number>(data.assessedSkillIds ?? []);
-        setProfile({
-          ...data.profile,
-          skills: (data.profile.skills ?? [])
-            .map((skill: StudentSkill & { skill?: { id: number } }) => ({
-              skillId: skill.skillId ?? skill.skill?.id,
-              proficiencyLevel: skill.proficiencyLevel,
-            }))
-            .filter((skill: StudentSkill) => assessedIds.has(skill.skillId)),
-        });
-        setAvailableSkills(
-          (data.skills ?? []).filter((skill: AvailableSkill) =>
-            assessedIds.has(skill.id)
-          )
-        );
-        setProfileImage(data.profile.profileImage ?? null);
-        setAssessedSkillIds(Array.from(assessedIds));
-      } catch (loadError) {
-        setError(
-          loadError instanceof Error ? loadError.message : "Failed to load profile"
-        );
-      } finally {
-        setLoading(false);
+    void loadProfile();
+
+    function refreshProfile() {
+      if (document.visibilityState === "visible") {
+        void loadProfile(false);
       }
     }
-    loadProfile();
-  }, []);
+
+    window.addEventListener("focus", refreshProfile);
+    window.addEventListener("pageshow", refreshProfile);
+    document.addEventListener("visibilitychange", refreshProfile);
+
+    return () => {
+      window.removeEventListener("focus", refreshProfile);
+      window.removeEventListener("pageshow", refreshProfile);
+      document.removeEventListener("visibilitychange", refreshProfile);
+    };
+  }, [loadProfile]);
 
   function updateField(
     field: keyof Profile,

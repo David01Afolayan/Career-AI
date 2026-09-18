@@ -24,6 +24,34 @@ type AssessmentResult = {
   createdAt: string;
 };
 
+const relatedFieldsByField: Record<string, string[]> = {
+  "Frontend Development": [
+    "Backend Development",
+    "Software Engineering Practices",
+    "Cloud & DevOps",
+  ],
+  "Backend Development": [
+    "Frontend Development",
+    "Databases & Data Engineering",
+    "Cloud & DevOps",
+  ],
+  "Artificial Intelligence & Machine Learning": [
+    "Data & Business Intelligence",
+    "Backend Development",
+    "Algorithms & Computer Science Foundations",
+  ],
+  "Data & Business Intelligence": [
+    "Artificial Intelligence & Machine Learning",
+    "Databases & Data Engineering",
+    "Backend Development",
+  ],
+  "Networks & Infrastructure": [
+    "Cybersecurity",
+    "Cloud & DevOps",
+    "Backend Development",
+  ],
+};
+
 export default function AssessmentResultPage() {
   const searchParams = useSearchParams();
   const assessmentId = searchParams.get("assessmentId");
@@ -66,7 +94,10 @@ export default function AssessmentResultPage() {
   const strongestSkill = result.skills[0];
   const weakestSkill = result.skills[result.skills.length - 1];
   const fieldTest = searchParams.get("fieldTest") === "true";
-  const fieldPassed = fieldTest && result.assessedField && result.score >= 60;
+  const fieldPassed = fieldTest && result.skills.length > 0 && result.score >= 60;
+  const relatedFields = result.assessedField
+    ? relatedFieldsByField[result.assessedField] ?? []
+    : [];
   const retakeHref = result.assessedField
     ? `/assessment?field=${encodeURIComponent(result.assessedField)}`
     : "/assessment";
@@ -128,6 +159,27 @@ export default function AssessmentResultPage() {
             </Link>
           </div>
         </section>
+
+        {fieldPassed && relatedFields.length > 0 && (
+          <section className="mt-8 rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-6 sm:p-8">
+            <h2 className="text-2xl font-bold">Related fields you can explore</h2>
+            <p className="mt-2 text-slate-400">
+              Your score qualifies you for an AI career recommendation. These
+              related fields are also worth exploring:
+            </p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              {relatedFields.map((relatedField) => (
+                <Link
+                  key={relatedField}
+                  href={`/assessment?field=${encodeURIComponent(relatedField)}`}
+                  className="rounded-full border border-cyan-400/40 px-4 py-2 text-sm font-semibold text-cyan-200 transition hover:bg-cyan-400/10"
+                >
+                  {relatedField}
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </main>
   );
