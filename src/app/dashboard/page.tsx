@@ -61,6 +61,16 @@ export default function DashboardPage() {
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-white sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
+        <button
+          type="button"
+          aria-label="Open navigation menu"
+          onClick={() => setNavigationOpen(true)}
+          className="fixed right-6 top-6 z-30 rounded-lg border border-slate-700 bg-slate-900 p-3 text-slate-300 shadow-lg transition hover:border-blue-400 hover:bg-slate-800 hover:text-white"
+        >
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-6 w-6">
+            <path d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
         {navigationOpen && (
           <button
             type="button"
@@ -110,16 +120,6 @@ export default function DashboardPage() {
         <header className="flex flex-col justify-between gap-5 md:flex-row md:items-center">
           <div><p className="text-sm font-semibold uppercase tracking-wider text-blue-400">Student Dashboard</p><h1 className="mt-2 text-3xl font-bold sm:text-4xl">Welcome, {data.user.name}</h1><p className="mt-2 text-slate-400">Track your skills, assessments, recommendations and learning progress.</p></div>
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              aria-label="Open navigation menu"
-              onClick={() => setNavigationOpen(true)}
-              className="rounded-lg border border-slate-700 bg-slate-900 p-3 text-slate-300 transition hover:border-blue-400 hover:bg-slate-800 hover:text-white"
-            >
-              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-6 w-6">
-                <path d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
             <button type="button" aria-label="Open profile navigation" onClick={() => setNavigationOpen(true)} className="flex h-16 w-16 items-center justify-center rounded-full bg-blue-600 text-2xl font-bold text-white ring-2 ring-blue-400/40 transition hover:bg-blue-500">
               {data.user.profileImage ? <img src={data.user.profileImage} alt={`${data.user.name}'s profile`} className="h-full w-full rounded-full object-cover" /> : data.user.name.trim().charAt(0).toUpperCase() || "U"}
             </button>
