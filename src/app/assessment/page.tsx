@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import BackButton from "@/components/BackButton";
 
@@ -28,6 +29,7 @@ type Track = {
 
 export default function AssessmentPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -36,6 +38,9 @@ export default function AssessmentPage() {
   const [error, setError] = useState("");
   const [skills, setSkills] = useState<Skill[]>([]);
   const [tracks, setTracks] = useState<Track[]>([]);
+  const skillId = searchParams.get("skillId");
+  const track = searchParams.get("track");
+  const field = searchParams.get("field");
 
   useEffect(() => {
     async function loadSkills() {
@@ -48,12 +53,12 @@ export default function AssessmentPage() {
         }
         setSkills(data.skills || []);
         setTracks(data.tracks || []);
-        const searchParams = new URLSearchParams(window.location.search);
-        const skillId = searchParams.get("skillId");
-        const track = searchParams.get("track");
-        const field = searchParams.get("field");
         if (skillId || track || field) {
           await loadTest(skillId, track, field);
+        } else {
+          setQuestions([]);
+          setAnswers({});
+          setCurrentIndex(0);
         }
       } catch {
         setError("Unable to connect to the server.");
@@ -62,7 +67,7 @@ export default function AssessmentPage() {
       }
     }
     loadSkills();
-  }, []);
+  }, [field, skillId, track]);
 
   async function loadTest(skillId: string | null, track: string | null, field: string | null) {
     setLoading(true);
