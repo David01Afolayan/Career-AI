@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import StudentMenu from "@/components/StudentMenu";
+import BackButton from "@/components/BackButton";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -151,12 +152,7 @@ export default function AssessmentResultPage() {
             <Link href="/profile" className="rounded-xl border border-cyan-500/50 px-6 py-3 font-semibold text-cyan-300 hover:bg-cyan-500/10">
               View Updated Skill Profile
             </Link>
-            <Link href="/dashboard" aria-label="Back to Dashboard" title="Back to Dashboard" className="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800">
-              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
-                <path d="M19 12H5" />
-                <path d="m12 19-7-7 7-7" />
-              </svg>
-            </Link>
+            <BackButton />
           </div>
         </section>
 

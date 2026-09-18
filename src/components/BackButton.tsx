@@ -1,4 +1,6 @@
-import Link from "next/link";
+"use client";
+
+import { useRouter } from "next/navigation";
 
 export function BackIcon() {
   return (
@@ -24,15 +26,26 @@ export default function BackButton({
   href?: string;
   label?: string;
 }) {
+  const router = useRouter();
+
+  function goBack() {
+    if (window.history.length > 1) {
+      router.back();
+      return;
+    }
+    router.push(href);
+  }
+
   return (
-    <Link
-      href={href}
+    <button
+      type="button"
+      onClick={goBack}
       aria-label={label}
       title={label}
       className="mb-6 inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-700 text-sm font-medium text-slate-300 transition hover:border-cyan-400 hover:text-white"
     >
       <BackIcon />
       {label !== "Back to Dashboard" && label}
-    </Link>
+    </button>
   );
 }
