@@ -49,6 +49,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, message: "Account created successfully.", userId: user.id }, { status: 201 });
   } catch (error) {
     console.error("Registration error:", error);
-    return NextResponse.json({ error: "Unable to complete registration right now." }, { status: 500 });
+
+    const message =
+      error instanceof Error && error.message.includes("Prisma")
+        ? "Unable to complete registration right now. Please check the database connection."
+        : "Unable to complete registration right now.";
+
+    return NextResponse.json({ error: message }, { status: 503 });
   }
 }
