@@ -174,28 +174,26 @@ export default function AssessmentPage() {
             Select one skill to test your comprehension. Your result will update
             that skill in your profile as Beginner, Intermediate, Advance, or Professional.
           </p>
-          <div className="mt-8 space-y-8">
+          <div className="mt-8 grid gap-4 sm:grid-cols-2">
             {Array.from(new Set(skills.map((skill) => skill.field))).map((field) => (
-              <section key={field}>
-                <h2 className="mb-3 text-lg font-semibold text-blue-300">{field}</h2>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {skills.filter((skill) => skill.field === field).map((skill) => (
-                    <article
-                      key={skill.id}
-                      className="rounded-xl border border-slate-800 bg-slate-900 p-5 transition hover:border-slate-600"
-                    >
-                      <span className="block font-semibold">{skill.name}</span>
-                      <span className="mt-1 block text-sm text-slate-400">{skill.category}</span>
-                    </article>
-                  ))}
-                </div>
+              <article
+                key={field}
+                className="rounded-xl border border-slate-800 bg-slate-900 p-5 transition hover:border-slate-600"
+              >
+                <h2 className="text-xl font-bold">{field}</h2>
+                <p className="mt-2 text-sm text-slate-400">
+                  {skills
+                    .filter((skill) => skill.field === field)
+                    .map((skill) => skill.name)
+                    .join(", ")}
+                </p>
                 <Link
                   href={`/assessment?field=${encodeURIComponent(field)}`}
-                  className="mt-4 inline-flex w-fit rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-500"
+                  className="mt-4 inline-flex rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-500"
                 >
                   Take Test
                 </Link>
-              </section>
+              </article>
             ))}
           </div>
           {tracks.length > 0 && (
