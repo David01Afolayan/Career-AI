@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { signOut } from "next-auth/react";
 import {
   Bar,
   BarChart,
@@ -36,6 +37,7 @@ function levelName(level: number) {
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [error, setError] = useState("");
+  const [navigationOpen, setNavigationOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/dashboard", { cache: "no-store" })
@@ -59,9 +61,51 @@ export default function DashboardPage() {
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-white sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
+        {navigationOpen && (
+          <button
+            type="button"
+            aria-label="Close navigation"
+            onClick={() => setNavigationOpen(false)}
+            className="fixed inset-0 z-40 bg-slate-950/70"
+          />
+        )}
+        <aside
+          className={`fixed right-0 top-0 z-50 h-full w-80 max-w-[90vw] transform border-l border-slate-800 bg-slate-900 p-6 shadow-2xl transition-transform duration-300 ${
+            navigationOpen ? "translate-x-0" : "translate-x-full"
+          }`}
+        >
+          <div className="flex items-center justify-between border-b border-slate-800 pb-5">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-wider text-blue-400">Account Menu</p>
+              <p className="mt-1 font-semibold">{data.user.name}</p>
+            </div>
+            <button type="button" aria-label="Close navigation" onClick={() => setNavigationOpen(false)} className="rounded-lg p-2 text-2xl text-slate-400 hover:bg-slate-800 hover:text-white">×</button>
+          </div>
+          <nav className="mt-6 space-y-2" aria-label="Student navigation">
+            {[
+              ["Dashboard", "/dashboard"],
+              ["My Profile", "/profile"],
+              ["Skill Assessment", "/assessment"],
+              ["Assessment History", "/assessment/history"],
+              ["Career Recommendations", "/ai-result"],
+              ["Careers", "/careers"],
+              ["Skill Gap", "/skill-gap"],
+              ["Learning Roadmap", "/roadmap"],
+              ["Progress", "/progress"],
+            ].map(([label, href]) => (
+              <Link key={href} href={href} onClick={() => setNavigationOpen(false)} className="block rounded-xl px-4 py-3 font-medium text-slate-300 hover:bg-blue-500/10 hover:text-white">{label}</Link>
+            ))}
+          </nav>
+          <button type="button" onClick={() => signOut({ callbackUrl: "/login" })} className="mt-8 w-full rounded-xl border border-red-500/40 px-4 py-3 text-left font-semibold text-red-300 hover:bg-red-500/10">Sign Out</button>
+        </aside>
         <header className="flex flex-col justify-between gap-5 md:flex-row md:items-center">
           <div><p className="text-sm font-semibold uppercase tracking-wider text-blue-400">Student Dashboard</p><h1 className="mt-2 text-3xl font-bold sm:text-4xl">Welcome, {data.user.name}</h1><p className="mt-2 text-slate-400">Track your skills, assessments, recommendations and learning progress.</p></div>
-          <Link href="/profile" className="rounded-xl border border-slate-700 px-5 py-3 text-center font-semibold text-slate-300 hover:bg-slate-800">Edit Profile</Link>
+          <div className="flex items-center gap-3">
+            <Link href="/profile" className="rounded-xl border border-slate-700 px-5 py-3 text-center font-semibold text-slate-300 hover:bg-slate-800">Edit Profile</Link>
+            <button type="button" aria-label="Open profile navigation" onClick={() => setNavigationOpen(true)} className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-lg font-bold text-white ring-2 ring-blue-400/40 transition hover:bg-blue-500">
+              {data.user.name.trim().charAt(0).toUpperCase() || "U"}
+            </button>
+          </div>
         </header>
 
         <section className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
