@@ -20,7 +20,7 @@ export default function StudentMenu() {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="relative">
+    <>
       <button
         type="button"
         aria-label={open ? "Close navigation menu" : "Open navigation menu"}
@@ -33,17 +33,26 @@ export default function StudentMenu() {
         </svg>
       </button>
       {open && (
-        <div className="absolute right-0 top-12 z-50 max-h-[calc(100vh-6rem)] w-64 overflow-y-auto rounded-xl border border-slate-700 bg-slate-900 p-2 shadow-2xl">
-          {links.map(([label, href]) => (
-            <Link key={href} href={href} onClick={() => setOpen(false)} className="block rounded-lg px-4 py-3 text-sm text-slate-300 hover:bg-blue-500/10 hover:text-white">
-              {label}
-            </Link>
-          ))}
-          <button type="button" onClick={() => signOut({ callbackUrl: "/login" })} className="mt-2 w-full border-t border-slate-700 px-4 py-3 text-left text-sm font-semibold text-red-300 hover:bg-red-500/10">
-            Logout
-          </button>
-        </div>
+        <>
+          <button type="button" aria-label="Close navigation" onClick={() => setOpen(false)} className="fixed inset-0 z-40 bg-slate-950/70" />
+          <aside className="fixed right-0 top-0 z-50 h-full w-80 max-w-[90vw] overflow-y-auto border-l border-slate-800 bg-slate-900 p-6 pb-10 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-5">
+              <p className="text-sm font-semibold uppercase tracking-wider text-blue-400">Student Navigation</p>
+              <button type="button" aria-label="Close navigation" onClick={() => setOpen(false)} className="rounded-lg p-2 text-2xl text-slate-400 hover:bg-slate-800 hover:text-white">×</button>
+            </div>
+            <nav className="mt-6 space-y-2" aria-label="Student navigation">
+              {links.map(([label, href]) => (
+                <Link key={href} href={href} onClick={() => setOpen(false)} className="block rounded-xl px-4 py-3 font-medium text-slate-300 hover:bg-blue-500/10 hover:text-white">
+                  {label}
+                </Link>
+              ))}
+            </nav>
+            <button type="button" onClick={() => signOut({ callbackUrl: "/login" })} className="mt-8 w-full rounded-xl border border-red-500/40 px-4 py-3 text-left font-semibold text-red-300 hover:bg-red-500/10">
+              Sign Out
+            </button>
+          </aside>
+        </>
       )}
-    </div>
+    </>
   );
 }
