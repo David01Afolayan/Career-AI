@@ -113,7 +113,6 @@ export default function AdminStudentsPage() {
           <div className="flex items-center gap-4 text-sm text-slate-300">
             <StudentMenu role="ADMIN" />
             <Link href="/admin" className="hover:text-white">Admin Dashboard</Link>
-            <Link href="/dashboard" className="hover:text-white">Student View</Link>
           </div>
         </div>
       </nav>
