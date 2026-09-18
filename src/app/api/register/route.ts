@@ -6,7 +6,13 @@ import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/security";
 
 export async function POST(request: Request) {
   try {
-    const rateLimit = await checkRateLimit(`register:${getClientIp(request)}`, 5, 15 * 60 * 1000);
+    const registrationLimit = Number(process.env.REGISTRATION_RATE_LIMIT ?? (process.env.NODE_ENV === "production" ? 20 : 100));
+    const registrationWindowMs = Number(process.env.REGISTRATION_RATE_LIMIT_WINDOW_MS ?? 15 * 60 * 1000);
+    const rateLimit = await checkRateLimit(
+      `register:${getClientIp(request)}`,
+      Number.isFinite(registrationLimit) && registrationLimit > 0 ? registrationLimit : 20,
+      Number.isFinite(registrationWindowMs) && registrationWindowMs > 0 ? registrationWindowMs : 15 * 60 * 1000
+    );
     if (!rateLimit.allowed) {
       return NextResponse.json(
         { error: "Too many registration attempts. Please try again later." },
