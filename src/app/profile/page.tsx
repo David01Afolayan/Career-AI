@@ -62,16 +62,23 @@ export default function ProfilePage() {
         if (!response.ok) {
           throw new Error(data.error || "Failed to load profile");
         }
+        const assessedIds = new Set<number>(data.assessedSkillIds ?? []);
         setProfile({
           ...data.profile,
-          skills: (data.profile.skills ?? []).map((skill: StudentSkill & { skill?: { id: number } }) => ({
-            skillId: skill.skillId ?? skill.skill?.id,
-            proficiencyLevel: skill.proficiencyLevel,
-          })),
+          skills: (data.profile.skills ?? [])
+            .map((skill: StudentSkill & { skill?: { id: number } }) => ({
+              skillId: skill.skillId ?? skill.skill?.id,
+              proficiencyLevel: skill.proficiencyLevel,
+            }))
+            .filter((skill: StudentSkill) => assessedIds.has(skill.skillId)),
         });
-        setAvailableSkills(data.skills ?? []);
+        setAvailableSkills(
+          (data.skills ?? []).filter((skill: AvailableSkill) =>
+            assessedIds.has(skill.id)
+          )
+        );
         setProfileImage(data.profile.profileImage ?? null);
-        setAssessedSkillIds(data.assessedSkillIds ?? []);
+        setAssessedSkillIds(Array.from(assessedIds));
       } catch (loadError) {
         setError(
           loadError instanceof Error ? loadError.message : "Failed to load profile"
@@ -277,6 +284,11 @@ export default function ProfilePage() {
               selected automatically. You can review them here before saving.
             </p>
             <div className="space-y-3">
+              {availableSkills.length === 0 && (
+                <p className="rounded-lg border border-slate-800 p-4 text-sm text-slate-400">
+                  Complete a skill assessment to see your assessed skills here.
+                </p>
+              )}
               {availableSkills.map((skill) => {
                 const selected = profile.skills.find((item) => item.skillId === skill.id);
                 return (
