@@ -181,9 +181,9 @@ export default function AssessmentPage() {
                   <h2 className="text-lg font-semibold text-blue-300">{field}</h2>
                   <Link
                     href={`/assessment?field=${encodeURIComponent(field)}`}
-                    className="inline-flex w-fit rounded-lg border border-blue-400 px-4 py-2 text-sm font-semibold text-blue-300 hover:bg-blue-500/10"
+                    className="inline-flex w-fit rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-500"
                   >
-                    Take {field} Test
+                    Take Test
                   </Link>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
