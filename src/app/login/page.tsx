@@ -43,21 +43,46 @@ function LoginForm() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 flex items-center justify-center px-6">
-      <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
-          <h1 className="text-4xl font-bold text-white">
-            Welcome Back
-          </h1>
+    <main className={`min-h-screen px-6 py-10 ${isAdminLogin ? "bg-slate-900" : "flex items-center justify-center bg-slate-950"}`}>
+      <div className={`w-full ${isAdminLogin ? "mx-auto grid max-w-5xl overflow-hidden rounded-3xl border border-cyan-500/20 bg-slate-950 shadow-2xl lg:grid-cols-[1fr_420px]" : "mx-auto max-w-md"}`}>
+        {isAdminLogin && (
+          <section className="hidden flex-col justify-between bg-gradient-to-br from-cyan-950 via-slate-950 to-blue-950 p-10 lg:flex">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.25em] text-cyan-400">CareerAI Administration</p>
+              <h2 className="mt-8 text-4xl font-bold leading-tight text-white">Manage the future of career learning.</h2>
+              <p className="mt-5 max-w-md leading-7 text-slate-400">
+                Use the secure administrator portal to manage students, careers, skills, resources, and assessment questions.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-cyan-400/20 bg-cyan-400/5 p-5">
+              <p className="text-sm font-semibold text-cyan-300">Administrator access</p>
+              <p className="mt-2 text-sm text-slate-400">Only accounts assigned the ADMIN role can continue to the control panel.</p>
+            </div>
+          </section>
+        )}
+
+        <div className={isAdminLogin ? "p-8 sm:p-10" : "p-0"}>
+          <div className="mb-8 text-center">
+            {isAdminLogin && (
+              <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-500/15 text-cyan-300 ring-1 ring-cyan-400/30">
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-7 w-7">
+                  <path d="M12 3 19 6v5c0 4.5-2.9 8.3-7 10-4.1-1.7-7-5.5-7-10V6l7-3Z" />
+                  <path d="m9.5 12 1.7 1.7 3.5-3.5" />
+                </svg>
+              </div>
+            )}
+            <h1 className="text-4xl font-bold text-white">
+              {isAdminLogin ? "Admin Sign In" : "Welcome Back"}
+            </h1>
 
           <p className="mt-3 text-slate-400">
             {isAdminLogin
               ? "Sign in to manage the CareerAI platform."
               : "Login to continue your CareerAI journey."}
           </p>
-        </div>
+          </div>
 
-        <form
+          <form
           onSubmit={handleSubmit}
           className="rounded-2xl border border-slate-800 bg-slate-900 p-8 shadow-xl"
         >
@@ -166,7 +191,8 @@ function LoginForm() {
               </>
             )}
           </p>
-        </form>
+          </form>
+        </div>
       </div>
     </main>
   );
