@@ -365,8 +365,12 @@ async function main() {
   console.log(`Seeded ${careers.length} career records.`);
 
   const adminSeedPassword = process.env.ADMIN_SEED_PASSWORD;
+  const adminSeedKey = process.env.ADMIN_SEED_KEY;
   if (!adminSeedPassword) {
     throw new Error("ADMIN_SEED_PASSWORD is required.");
+  }
+  if (!adminSeedKey) {
+    throw new Error("ADMIN_SEED_KEY is required.");
   }
 
   const adminEmail =
@@ -379,12 +383,14 @@ async function main() {
     },
     update: {
       role: "ADMIN",
+      adminKeyHash: await bcrypt.hash(adminSeedKey, 12),
     },
     create: {
       name: "CareerAI Administrator",
       email: adminEmail,
       passwordHash: adminPassword,
       role: "ADMIN",
+      adminKeyHash: await bcrypt.hash(adminSeedKey, 12),
     },
   });
 

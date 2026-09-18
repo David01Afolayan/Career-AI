@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { registrationSchema } from "@/lib/validation";
+import { adminKeySchema, registrationSchema } from "@/lib/validation";
 
 export async function POST(request: Request) {
   try {
@@ -20,6 +20,11 @@ export async function POST(request: Request) {
     }
 
     const { name, email, password } = parsed.data;
+    const bodyRecord = body as Record<string, unknown>;
+    const parsedAdminKey = adminKeySchema.safeParse(bodyRecord.adminKey);
+    if (!parsedAdminKey.success) {
+      return NextResponse.json({ error: "Administrator key must be between 8 and 128 characters." }, { status: 400 });
+    }
     if (await db.user.findUnique({ where: { email } })) {
       return NextResponse.json({ error: "Unable to create an account with these details." }, { status: 400 });
     }
@@ -29,6 +34,7 @@ export async function POST(request: Request) {
         name,
         email,
         passwordHash: await bcrypt.hash(password, 12),
+        adminKeyHash: await bcrypt.hash(parsedAdminKey.data, 12),
         role: "ADMIN",
       },
       select: { id: true, name: true, email: true, role: true },

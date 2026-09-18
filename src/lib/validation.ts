@@ -9,6 +9,8 @@ export const registrationSchema = z.object({
   level: z.coerce.number().int().refine((value) => [100, 200, 300, 400].includes(value)).optional(),
 });
 
+export const adminKeySchema = z.string().trim().min(8).max(128);
+
 const nullableText = (max: number) =>
   z.preprocess(
     (value) => value === "" || value === undefined ? null : value,

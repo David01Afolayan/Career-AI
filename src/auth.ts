@@ -17,6 +17,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           label: "Password",
           type: "password",
         },
+        adminKey: {
+          label: "Administrator key",
+          type: "password",
+        },
       },
 
       async authorize(credentials) {
@@ -26,6 +30,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         const email = String(credentials.email).trim().toLowerCase();
         const password = String(credentials.password);
+        const adminKey = credentials.adminKey ? String(credentials.adminKey).trim() : "";
         if (!email || password.length < 8 || password.length > 72) return null;
 
         const requestHeaders = await headers();
@@ -47,6 +52,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         if (!passwordCorrect) {
           return null;
+        }
+
+        if (user.role === "ADMIN") {
+          if (!adminKey || !user.adminKeyHash || !(await bcrypt.compare(adminKey, user.adminKeyHash))) {
+            return null;
+          }
         }
 
         return {

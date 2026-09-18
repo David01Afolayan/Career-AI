@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 export default function AdminRegisterPage() {
   const router = useRouter();
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [form, setForm] = useState({ name: "", email: "", password: "", adminKey: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -56,6 +56,7 @@ export default function AdminRegisterPage() {
               ["name", "Full Name", "Administrator name", "text"],
               ["email", "Email", "admin@example.com", "email"],
               ["password", "Password", "At least 8 characters", "password"],
+              ["adminKey", "Unique Administrator Key", "Create a key for future sign-in verification", "password"],
             ].map(([name, label, placeholder, type]) => (
               <div key={name}>
                 <label className="mb-2 block text-sm text-slate-300">{label}</label>

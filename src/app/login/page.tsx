@@ -14,6 +14,7 @@ function LoginForm() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [adminKey, setAdminKey] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -30,6 +31,7 @@ function LoginForm() {
     const result = await signIn("credentials", {
       email,
       password,
+      ...(isAdminLogin ? { adminKey } : {}),
       redirect: false,
     });
 
@@ -186,6 +188,22 @@ function LoginForm() {
                 </a>
               </div>
             </div>
+
+            {isAdminLogin && (
+              <div>
+                <label className="mb-2 block text-sm text-slate-300">Administrator Key</label>
+                <input
+                  type="password"
+                  name="admin-key"
+                  autoComplete="off"
+                  required
+                  value={adminKey}
+                  onChange={(event) => setAdminKey(event.target.value)}
+                  placeholder="Enter your unique administrator key"
+                  className="w-full rounded-lg border border-slate-700 bg-slate-800 px-4 py-3 text-white outline-none focus:border-cyan-500"
+                />
+              </div>
+            )}
 
             <button
               type="submit"
