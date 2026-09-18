@@ -70,13 +70,13 @@ export default function DashboardPage() {
           />
         )}
         <aside
-          className={`fixed right-0 top-0 z-50 h-full w-80 max-w-[90vw] transform border-l border-slate-800 bg-slate-900 p-6 shadow-2xl transition-transform duration-300 ${
+          className={`fixed right-0 top-0 z-50 h-full w-80 max-w-[90vw] transform overflow-y-auto border-l border-slate-800 bg-slate-900 p-6 pb-10 shadow-2xl transition-transform duration-300 ${
             navigationOpen ? "translate-x-0" : "translate-x-full"
           }`}
         >
           <div className="flex items-center justify-between border-b border-slate-800 pb-5">
             <div className="flex items-center gap-3">
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-600 text-2xl font-bold text-white ring-2 ring-blue-400/40">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-600 text-xl font-bold text-white ring-2 ring-blue-400/40">
                 {data.user.profileImage ? (
                   <img src={data.user.profileImage} alt={`${data.user.name}'s profile`} className="h-full w-full object-cover" />
                 ) : (
