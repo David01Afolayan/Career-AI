@@ -16,7 +16,7 @@ import {
 } from "recharts";
 
 type DashboardData = {
-  user: { name: string; email: string; role: string };
+  user: { name: string; email: string; role: string; profileImage: string | null };
   profileCompletion: number;
   latestAssessment: { score: number; date: string } | null;
   assessmentStats: { total: number; averageScore: number; latestScore: number | null };
@@ -102,7 +102,7 @@ export default function DashboardPage() {
           <div><p className="text-sm font-semibold uppercase tracking-wider text-blue-400">Student Dashboard</p><h1 className="mt-2 text-3xl font-bold sm:text-4xl">Welcome, {data.user.name}</h1><p className="mt-2 text-slate-400">Track your skills, assessments, recommendations and learning progress.</p></div>
           <div className="flex items-center gap-3">
             <button type="button" aria-label="Open profile navigation" onClick={() => setNavigationOpen(true)} className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-600 text-lg font-bold text-white ring-2 ring-blue-400/40 transition hover:bg-blue-500">
-              {data.user.name.trim().charAt(0).toUpperCase() || "U"}
+              {data.user.profileImage ? <img src={data.user.profileImage} alt="" className="h-full w-full rounded-full object-cover" /> : data.user.name.trim().charAt(0).toUpperCase() || "U"}
             </button>
           </div>
         </header>

@@ -54,6 +54,7 @@ export async function GET() {
       profile: {
         name: user.name,
         email: user.email,
+        profileImage: user.profileImage,
         matricNumber: student.matricNumber,
         department: student.department,
         level: student.level,

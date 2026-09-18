@@ -6,6 +6,7 @@ import Link from "next/link";
 type Profile = {
   name: string;
   email: string;
+  profileImage: string | null;
   matricNumber: string | null;
   department: string | null;
   level: number | null;
@@ -32,6 +33,7 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile>({
     name: "",
     email: "",
+    profileImage: null,
     matricNumber: "",
     department: "",
     level: null,
@@ -49,6 +51,8 @@ export default function ProfilePage() {
   const [editing, setEditing] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadProfile() {
@@ -66,6 +70,7 @@ export default function ProfilePage() {
           })),
         });
         setAvailableSkills(data.skills ?? []);
+        setProfileImage(data.profile.profileImage ?? null);
         setAssessedSkillIds(data.assessedSkillIds ?? []);
       } catch (loadError) {
         setError(
@@ -167,6 +172,28 @@ export default function ProfilePage() {
       </nav>
 
       <div className="mx-auto max-w-4xl px-6 py-10">
+        <section className="mb-8 flex items-center gap-5 rounded-2xl border border-slate-800 bg-slate-900 p-6">
+          <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-blue-600 text-3xl font-bold">
+            {profileImage ? <img src={profileImage} alt="Profile" className="h-full w-full object-cover" /> : profile.name.trim().charAt(0).toUpperCase() || "U"}
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold">Profile Picture</h2>
+            <p className="mt-1 text-sm text-slate-400">JPG, PNG, or WebP up to 2 MB.</p>
+            {editing && <input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploadingImage} onChange={async (event) => {
+              const file = event.target.files?.[0];
+              if (!file) return;
+              setUploadingImage(true);
+              const formData = new FormData();
+              formData.append("image", file);
+              const response = await fetch("/api/profile/image", { method: "POST", body: formData });
+              const data = await response.json();
+              if (response.ok) setProfileImage(data.profileImage);
+              else setError(data.error || "Unable to upload profile image.");
+              setUploadingImage(false);
+              event.target.value = "";
+            }} className="mt-3 block text-sm text-slate-300" />}
+          </div>
+        </section>
         <div className="mb-8">
           <h1 className="text-3xl font-bold">My Profile</h1>
           <p className="mt-2 text-slate-400">

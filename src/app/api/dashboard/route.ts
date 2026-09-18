@@ -143,7 +143,7 @@ export async function GET() {
     }
 
     return NextResponse.json({
-      user: { name: user.name, email: user.email, role: user.role },
+      user: { name: user.name, email: user.email, role: user.role, profileImage: user.profileImage },
       profileCompletion,
       latestAssessment: latestAssessment
         ? {
