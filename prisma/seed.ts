@@ -244,6 +244,69 @@ async function main() {
       resourceType: "Tutorial",
       difficulty: "Beginner",
     },
+    {
+      skill: "Docker",
+      title: "Docker Get Started",
+      description:
+        "Learn containers, images, Dockerfiles, networking and deployment workflows.",
+      url: "https://docs.docker.com/get-started/",
+      resourceType: "Course",
+      difficulty: "Beginner",
+    },
+    {
+      skill: "JavaScript",
+      title: "Modern JavaScript Course",
+      description:
+        "Build stronger JavaScript skills with modules, promises, async programming and browser APIs.",
+      url: "https://javascript.info/",
+      resourceType: "Course",
+      difficulty: "Intermediate",
+    },
+    {
+      skill: "React",
+      title: "React Native Learn",
+      description:
+        "Use React concepts to begin building cross-platform mobile applications.",
+      url: "https://reactnative.dev/docs/getting-started",
+      resourceType: "Course",
+      difficulty: "Intermediate",
+    },
+    {
+      skill: "Java",
+      title: "Android Basics with Compose",
+      description:
+        "Learn Android app fundamentals, Kotlin concepts, UI development and app architecture.",
+      url: "https://developer.android.com/courses/android-basics-compose/course",
+      resourceType: "Course",
+      difficulty: "Beginner",
+    },
+    {
+      skill: "C++",
+      title: "iOS Development Foundations",
+      description:
+        "Explore Apple platform development concepts, Swift fundamentals and Xcode workflows.",
+      url: "https://developer.apple.com/tutorials/swiftui",
+      resourceType: "Course",
+      difficulty: "Beginner",
+    },
+    {
+      skill: "Node.js",
+      title: "Full-Stack Open",
+      description:
+        "Build modern full-stack web applications with React, Node.js, APIs and databases.",
+      url: "https://fullstackopen.com/en/",
+      resourceType: "Course",
+      difficulty: "Intermediate",
+    },
+    {
+      skill: "SQL",
+      title: "SQL Practice Exercises",
+      description:
+        "Practice queries, joins, aggregation and database design for backend and full-stack development.",
+      url: "https://sqlbolt.com/",
+      resourceType: "Practice",
+      difficulty: "Beginner",
+    },
   ];
 
   for (const skillName of [...new Set(resources.map((resource) => resource.skill))]) {
