@@ -43,7 +43,7 @@ export default function AdminRegisterPage() {
             <p className="mt-5 max-w-md leading-7 text-slate-400">Administrator accounts can manage the platform and its learning data.</p>
           </div>
           <p className="rounded-2xl border border-cyan-400/20 bg-cyan-400/5 p-5 text-sm text-slate-400">
-            Sign in as an existing administrator before creating another administrator account.
+            Enter a unique administrator key. It will be required whenever this account signs in.
           </p>
         </section>
 

@@ -9,10 +9,6 @@ export async function POST(request: Request) {
     const session = await auth();
     const authorizedAdmin = session?.user?.role === "ADMIN";
 
-    if (!authorizedAdmin) {
-      return NextResponse.json({ error: "Sign in as an administrator before creating another admin account." }, { status: 403 });
-    }
-
     const body: unknown = await request.json();
     const parsed = registrationSchema.safeParse(body);
     if (!parsed.success) {
@@ -24,6 +20,11 @@ export async function POST(request: Request) {
     const parsedAdminKey = adminKeySchema.safeParse(bodyRecord.adminKey);
     if (!parsedAdminKey.success) {
       return NextResponse.json({ error: "Administrator key must be between 8 and 128 characters." }, { status: 400 });
+    }
+    const setupKey = process.env.ADMIN_SETUP_KEY;
+    const authorizedBySetupKey = Boolean(setupKey && parsedAdminKey.data === setupKey);
+    if (!authorizedAdmin && !authorizedBySetupKey) {
+      return NextResponse.json({ error: "The administrator key is not authorized for account creation." }, { status: 403 });
     }
     if (await db.user.findUnique({ where: { email } })) {
       return NextResponse.json({ error: "Unable to create an account with these details." }, { status: 400 });
