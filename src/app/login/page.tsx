@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import { Suspense } from "react";
 import { getSession, signIn, signOut } from "next-auth/react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 function LoginForm() {
   const router = useRouter();
@@ -203,6 +204,11 @@ function LoginForm() {
                   Create Account
                 </a>
               </>
+            )}
+            {isAdminLogin && (
+              <Link href="/register/admin" className="text-cyan-400 hover:text-cyan-300">
+                Create Admin Account
+              </Link>
             )}
           </p>
           </form>
