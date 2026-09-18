@@ -1,6 +1,7 @@
 import Navbar from "../../components/Navbar";
 import Sidebar from "../../components/Sidebar";
 import SkillCard from "../../components/SkillCard";
+import BackButton from "@/components/BackButton";
 
 const skills = [
   { name: "Communication", level: 86, category: "Soft Skill" },
@@ -16,6 +17,7 @@ export default function SkillsPage() {
       <div className="flex">
         <Sidebar />
         <div className="flex-1 bg-slate-950 p-6 lg:p-10">
+          <BackButton />
           <p className="text-sm font-semibold uppercase tracking-widest text-blue-400">
             Skills overview
           </p>

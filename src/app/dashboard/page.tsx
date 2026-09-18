@@ -30,7 +30,7 @@ type DashboardData = {
 };
 
 function levelName(level: number) {
-  return level === 3 ? "Advanced" : level === 2 ? "Intermediate" : level === 1 ? "Basic" : "Beginner";
+  return level === 3 ? "Professional" : level === 2 ? "Advance" : level === 1 ? "Intermediate" : "Beginner";
 }
 
 export default function DashboardPage() {

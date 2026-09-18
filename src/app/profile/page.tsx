@@ -14,6 +14,18 @@ type Profile = {
   experience: string | null;
   projects: number;
   certifications: number;
+  skills: StudentSkill[];
+};
+
+type StudentSkill = {
+  skillId: number;
+  proficiencyLevel: number;
+};
+
+type AvailableSkill = {
+  id: number;
+  name: string;
+  category: string;
 };
 
 export default function ProfilePage() {
@@ -28,7 +40,9 @@ export default function ProfilePage() {
     experience: "",
     projects: 0,
     certifications: 0,
+    skills: [],
   });
+  const [availableSkills, setAvailableSkills] = useState<AvailableSkill[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -42,7 +56,14 @@ export default function ProfilePage() {
         if (!response.ok) {
           throw new Error(data.error || "Failed to load profile");
         }
-        setProfile(data.profile);
+        setProfile({
+          ...data.profile,
+          skills: (data.profile.skills ?? []).map((skill: StudentSkill & { skill?: { id: number } }) => ({
+            skillId: skill.skillId ?? skill.skill?.id,
+            proficiencyLevel: skill.proficiencyLevel,
+          })),
+        });
+        setAvailableSkills(data.skills ?? []);
       } catch (loadError) {
         setError(
           loadError instanceof Error ? loadError.message : "Failed to load profile"
@@ -54,7 +75,10 @@ export default function ProfilePage() {
     loadProfile();
   }, []);
 
-  function updateField(field: keyof Profile, value: string | number | null) {
+  function updateField(
+    field: keyof Profile,
+    value: string | number | null | StudentSkill[]
+  ) {
     setProfile((previous) => ({ ...previous, [field]: value }));
   }
 
@@ -158,6 +182,65 @@ export default function ProfilePage() {
             <div className="space-y-5">
               <TextAreaField label="Career Interests" placeholder="e.g. Web development, AI, cybersecurity, cloud computing..." value={profile.interests || ""} onChange={(value) => updateField("interests", value)} />
               <TextAreaField label="Experience" placeholder="Describe your internship, freelance work, jobs or other relevant experience..." value={profile.experience || ""} onChange={(value) => updateField("experience", value)} />
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
+            <h2 className="mb-2 text-xl font-semibold">Skills</h2>
+            <p className="mb-6 text-sm text-slate-400">
+              Add at least three skills and select your current proficiency level
+              from 0 (beginner) to 3 (advanced).
+            </p>
+            <div className="space-y-3">
+              {availableSkills.map((skill) => {
+                const selected = profile.skills.find((item) => item.skillId === skill.id);
+                return (
+                  <div
+                    key={skill.id}
+                    className="flex flex-col gap-3 rounded-lg border border-slate-800 p-4 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <label className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(selected)}
+                        onChange={(event) => {
+                          const skills = event.target.checked
+                            ? [...profile.skills, { skillId: skill.id, proficiencyLevel: 1 }]
+                            : profile.skills.filter((item) => item.skillId !== skill.id);
+                          updateField("skills", skills);
+                        }}
+                        className="h-4 w-4 accent-cyan-400"
+                      />
+                      <span>
+                        <span className="block font-medium">{skill.name}</span>
+                        <span className="text-xs text-slate-500">{skill.category}</span>
+                      </span>
+                    </label>
+                    {selected && (
+                      <select
+                        value={selected.proficiencyLevel}
+                        onChange={(event) => {
+                          const proficiencyLevel = Number(event.target.value);
+                          updateField(
+                            "skills",
+                            profile.skills.map((item) =>
+                              item.skillId === skill.id
+                                ? { ...item, proficiencyLevel }
+                                : item
+                            )
+                          );
+                        }}
+                        className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-white outline-none focus:border-cyan-400"
+                      >
+                        <option value={0}>Beginner</option>
+                        <option value={1}>Intermediate</option>
+                        <option value={2}>Advance</option>
+                        <option value={3}>Professional</option>
+                      </select>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </section>
 

@@ -13,3 +13,4 @@ npm-debug.log*
 
 prisma/dev.db
 tsconfig.tsbuildinfo
+.vercel

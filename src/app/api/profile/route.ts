@@ -31,9 +31,19 @@ export async function GET() {
       );
     }
 
-    const student =
-      (await db.student.findUnique({ where: { userId } })) ??
-      (await db.student.create({ data: { userId } }));
+    let student = await db.student.findUnique({
+      where: { userId },
+      include: { skills: true },
+    });
+    if (!student) {
+      student = await db.student.create({
+        data: { userId },
+        include: { skills: true },
+      });
+    }
+    const skills = await db.skill.findMany({
+      orderBy: [{ category: "asc" }, { name: "asc" }],
+    });
 
     return NextResponse.json({
       profile: {
@@ -47,7 +57,9 @@ export async function GET() {
         experience: student.experience,
         projects: student.projects,
         certifications: student.certifications,
+        skills: student.skills,
       },
+      skills,
     });
   } catch (error) {
     console.error("Profile GET error:", error);
@@ -80,49 +92,74 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await db.user.update({
-      where: { id: userId },
-      data: { name: data.name },
-    });
+    const result = await db.$transaction(async (transaction) => {
+      const user = await transaction.user.update({
+        where: { id: userId },
+        data: { name: data.name },
+      });
 
-    const student = await db.student.upsert({
-      where: { userId },
-      create: {
-        userId,
-        matricNumber: data.matricNumber,
-        department: data.department,
-        level: data.level,
-        cgpa: data.cgpa,
-        interests: data.interests,
-        experience: data.experience,
-        projects: data.projects ?? 0,
-        certifications: data.certifications ?? 0,
-      },
-      update: {
-        matricNumber: data.matricNumber,
-        department: data.department,
-        level: data.level,
-        cgpa: data.cgpa,
-        interests: data.interests,
-        experience: data.experience,
-        projects: data.projects ?? 0,
-        certifications: data.certifications ?? 0,
-      },
+      const student = await transaction.student.upsert({
+        where: { userId },
+        create: {
+          userId,
+          matricNumber: data.matricNumber,
+          department: data.department,
+          level: data.level,
+          cgpa: data.cgpa,
+          interests: data.interests,
+          experience: data.experience,
+          projects: data.projects ?? 0,
+          certifications: data.certifications ?? 0,
+        },
+        update: {
+          matricNumber: data.matricNumber,
+          department: data.department,
+          level: data.level,
+          cgpa: data.cgpa,
+          interests: data.interests,
+          experience: data.experience,
+          projects: data.projects ?? 0,
+          certifications: data.certifications ?? 0,
+        },
+      });
+
+      const skillIds = data.skills.map((skill) => skill.skillId);
+      const existingSkills = await transaction.skill.findMany({
+        where: { id: { in: skillIds } },
+        select: { id: true },
+      });
+      if (existingSkills.length !== skillIds.length) {
+        throw new Error("One or more selected skills do not exist.");
+      }
+
+      await transaction.studentSkill.deleteMany({ where: { studentId: student.id } });
+      if (data.skills.length > 0) {
+        await transaction.studentSkill.createMany({
+          data: data.skills.map((skill) => ({
+            studentId: student.id,
+            skillId: skill.skillId,
+            proficiencyLevel: skill.proficiencyLevel,
+          })),
+        });
+      }
+
+      return { user, student };
     });
 
     return NextResponse.json({
       message: "Profile updated successfully.",
       profile: {
-        name: user.name,
-        email: user.email,
-        matricNumber: student.matricNumber,
-        department: student.department,
-        level: student.level,
-        cgpa: student.cgpa,
-        interests: student.interests,
-        experience: student.experience,
-        projects: student.projects,
-        certifications: student.certifications,
+        name: result.user.name,
+        email: result.user.email,
+        matricNumber: result.student.matricNumber,
+        department: result.student.department,
+        level: result.student.level,
+        cgpa: result.student.cgpa,
+        interests: result.student.interests,
+        experience: result.student.experience,
+        projects: result.student.projects,
+        certifications: result.student.certifications,
+        skills: data.skills,
       },
     });
   } catch (error) {

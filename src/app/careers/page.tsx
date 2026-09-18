@@ -1,6 +1,7 @@
 import CareerCard from "@/components/CareerCard";
 import Navbar from "@/components/Navbar";
 import Sidebar from "@/components/Sidebar";
+import BackButton from "@/components/BackButton";
 import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +29,7 @@ export default async function CareersPage() {
 
         <section className="flex-1 bg-slate-950 p-6 lg:p-10">
           <div className="mx-auto max-w-7xl">
+            <BackButton />
             <div className="mb-8">
               <p className="text-sm font-semibold uppercase tracking-widest text-blue-400">
                 Career paths

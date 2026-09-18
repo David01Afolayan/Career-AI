@@ -22,12 +22,36 @@ A career guidance and skills recommendation platform for students and job seeker
 
 1. Install dependencies:
    npm install
-2. Set up your local SQLite database in `.env`:
-   DATABASE_URL="file:./dev.db"
+2. Set up your local PostgreSQL database in `.env`:
+   DATABASE_URL="postgresql://user:password@localhost:5432/career_ai"
 3. Sync the Prisma schema to the database:
    npx prisma db push
 4. Start the app:
    npm run dev
+
+To use AI recommendations locally, start the ML service in a second terminal from
+the `ml` directory:
+
+```text
+uvicorn app:app --reload --port 8000
+```
+
+Set `ML_API_KEY` to the same value for both the Next.js app and the ML service.
+
+## Render deployment
+
+This app is configured for Render using a Node web service.
+
+1. Create a PostgreSQL database on Render.
+2. Add the following environment variables in Render:
+   - `DATABASE_URL`
+   - `AUTH_SECRET` (generate a secure random value)
+   - `AUTH_TRUST_HOST=true`
+   - `NEXT_PUBLIC_APP_URL=https://your-render-domain.onrender.com`
+3. Connect the GitHub repository and deploy the service.
+4. `render.yaml` creates both the Next.js app and the `career-ai-ml` service.
+   Copy the generated `ML_API_KEY` from the ML service into the Next.js service.
+5. Render will automatically run Prisma migrations before startup via `render.yaml`.
 
 ## Project structure
 

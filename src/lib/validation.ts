@@ -34,6 +34,15 @@ export const profileSchema = z.object({
   experience: nullableText(2000),
   projects: nullableNumber(0, 1000, true),
   certifications: nullableNumber(0, 1000, true),
+  skills: z.array(
+    z.object({
+      skillId: z.coerce.number().int().positive(),
+      proficiencyLevel: z.coerce.number().int().min(0).max(3),
+    })
+  ).max(100).refine(
+    (skills) => new Set(skills.map((skill) => skill.skillId)).size === skills.length,
+    "Each skill can only be selected once."
+  ),
 });
 
 export const assessmentSubmitSchema = z.object({

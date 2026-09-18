@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import BackButton from "@/components/BackButton";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
 type Skill = { id: number; name: string; category: string };
@@ -112,6 +113,7 @@ export default function AdminQuestionsPage() {
 
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-10 text-white">
+        <BackButton href="/admin" label="Back to Admin Dashboard" />
       <div className="mx-auto max-w-7xl">
         <Link href="/admin" className="text-sm text-cyan-400">← Admin Dashboard</Link>
         <h1 className="mt-4 text-3xl font-bold">Assessment Questions</h1>

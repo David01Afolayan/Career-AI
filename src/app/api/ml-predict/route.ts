@@ -157,6 +157,17 @@ export async function POST() {
       careerId: career.id,
       confidence: confidencePercentage,
       probabilities: result.probabilities || result.recommendations || {},
+      recommendations: Array.isArray(result.recommendations)
+        ? result.recommendations
+        : Object.entries(result.probabilities || {})
+            .map(([careerName, probability]) => ({
+              career: careerName,
+              confidence:
+                Number(probability) <= 1
+                  ? Number(probability) * 100
+                  : Number(probability),
+            }))
+            .sort((left, right) => right.confidence - left.confidence),
     };
 
     return NextResponse.json({

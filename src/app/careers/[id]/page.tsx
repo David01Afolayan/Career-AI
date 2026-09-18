@@ -30,7 +30,7 @@ type CareerData = {
 };
 
 function levelName(level: number) {
-  return ["Beginner", "Basic", "Intermediate", "Advanced"][level] || "Beginner";
+  return ["Beginner", "Intermediate", "Advance", "Professional"][level] || "Beginner";
 }
 
 export default function CareerDetailsPage() {

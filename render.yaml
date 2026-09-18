@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: career-ai-ml
+    runtime: python
+    plan: free
+    region: oregon
+    rootDir: ml
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: ML_API_KEY
+        generateValue: true
+
+  - type: web
+    name: career-ai
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npx prisma migrate deploy && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: AUTH_TRUST_HOST
+        value: "true"
+      - key: DATABASE_URL
+        sync: false
+      - key: AUTH_SECRET
+        generateValue: true
+      - key: ML_API_URL
+        value: https://career-ai-ml.onrender.com
+      - key: ML_API_KEY
+        sync: false

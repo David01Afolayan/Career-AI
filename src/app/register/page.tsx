@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import BackButton from "@/components/BackButton";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -61,6 +62,7 @@ export default function RegisterPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-950 px-6 text-white">
       <div className="w-full max-w-md">
+        <BackButton href="/" label="Back to Home" />
         <h1 className="text-3xl font-bold">Create your account</h1>
 
         <p className="mt-2 text-slate-400">

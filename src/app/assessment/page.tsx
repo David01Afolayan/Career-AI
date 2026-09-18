@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import BackButton from "@/components/BackButton";
 
 type Question = {
   id: string;
@@ -9,6 +10,13 @@ type Question = {
   options: unknown;
   difficulty: string;
   skill: { id: number; name: string; category: string };
+};
+
+type Skill = {
+  id: number;
+  name: string;
+  category: string;
+  field: string;
 };
 
 export default function AssessmentPage() {
@@ -19,9 +27,11 @@ export default function AssessmentPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [selectedSkillId, setSelectedSkillId] = useState<number | null>(null);
 
   useEffect(() => {
-    async function loadQuestions() {
+    async function loadSkills() {
       try {
         const response = await fetch("/api/assessment/questions");
         const data = await response.json();
@@ -29,15 +39,39 @@ export default function AssessmentPage() {
           setError(data.error || "Unable to load assessment.");
           return;
         }
-        setQuestions(data.questions || []);
+        setSkills(data.skills || []);
       } catch {
         setError("Unable to connect to the server.");
       } finally {
         setLoading(false);
       }
     }
-    loadQuestions();
+    loadSkills();
   }, []);
+
+  async function startSkillTest() {
+    if (!selectedSkillId) {
+      setError("Select a skill to test before continuing.");
+      return;
+    }
+    setLoading(true);
+    setError("");
+    try {
+      const response = await fetch(
+        `/api/assessment/questions?skillId=${selectedSkillId}`
+      );
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Unable to load skill test.");
+      if (!data.questions?.length) throw new Error("No questions are available for this skill.");
+      setQuestions(data.questions);
+      setAnswers({});
+      setCurrentIndex(0);
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "Unable to load skill test.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const currentQuestion = questions[currentIndex];
   const options = currentQuestion && Array.isArray(currentQuestion.options)
@@ -110,12 +144,57 @@ export default function AssessmentPage() {
     return <main className="min-h-screen bg-slate-950 px-6 py-16 text-center text-white"><div className="text-4xl">🧠</div><h1 className="mt-4 text-2xl font-bold">Loading Career Assessment...</h1><p className="mt-2 text-slate-400">Preparing your questions.</p></main>;
   }
 
-  if (error && questions.length === 0) {
+  if (error && skills.length === 0) {
     return <main className="min-h-screen bg-slate-950 px-6 py-16 text-white"><div className="mx-auto max-w-xl rounded-2xl border border-red-500/30 bg-red-500/10 p-8 text-center"><h1 className="text-2xl font-bold">Unable to Load Assessment</h1><p className="mt-3 text-red-300">{error}</p><button onClick={() => window.location.reload()} className="mt-6 rounded-lg bg-white px-5 py-3 font-semibold text-slate-900">Try Again</button></div></main>;
   }
 
-  if (!currentQuestion) {
-    return <main className="min-h-screen bg-slate-950 px-6 py-16 text-center text-white"><h1 className="text-2xl font-bold">No Assessment Questions Found</h1><p className="mt-3 text-slate-400">Please seed the assessment questions first.</p></main>;
+  if (!currentQuestion && questions.length === 0) {
+    return (
+      <main className="min-h-screen bg-slate-950 px-6 py-16 text-white">
+        <div className="mx-auto max-w-3xl">
+          <BackButton />
+          <p className="text-sm font-semibold uppercase tracking-wider text-blue-400">CareerAI Skill Test</p>
+          <h1 className="mt-3 text-3xl font-bold">Check your skill level</h1>
+          <p className="mt-3 text-slate-400">
+            Select one skill to test your comprehension. Your result will update
+            that skill in your profile as Beginner, Intermediate, Advance, or Professional.
+          </p>
+          <div className="mt-8 space-y-8">
+            {Array.from(new Set(skills.map((skill) => skill.field))).map((field) => (
+              <section key={field}>
+                <h2 className="mb-3 text-lg font-semibold text-blue-300">{field}</h2>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {skills.filter((skill) => skill.field === field).map((skill) => (
+                    <button
+                      key={skill.id}
+                      type="button"
+                      onClick={() => setSelectedSkillId(skill.id)}
+                      className={`rounded-xl border p-5 text-left transition ${
+                        selectedSkillId === skill.id
+                          ? "border-blue-500 bg-blue-500/10"
+                          : "border-slate-800 bg-slate-900 hover:border-slate-600"
+                      }`}
+                    >
+                      <span className="block font-semibold">{skill.name}</span>
+                      <span className="mt-1 block text-sm text-slate-400">{skill.category}</span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+          {error && <p className="mt-5 text-sm text-red-300">{error}</p>}
+          <button
+            type="button"
+            onClick={startSkillTest}
+            disabled={!selectedSkillId || loading}
+            className="mt-8 rounded-xl bg-blue-600 px-6 py-3 font-semibold hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {loading ? "Preparing test..." : "Start Skill Test"}
+          </button>
+        </div>
+      </main>
+    );
   }
 
   const progress = Math.round(((currentIndex + 1) / questions.length) * 100);
@@ -124,12 +203,17 @@ export default function AssessmentPage() {
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-white sm:px-6 lg:px-8">
       <div className="mx-auto max-w-4xl">
+        <BackButton />
         <header className="mb-8">
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
             <div>
               <p className="text-sm font-semibold uppercase tracking-wider text-blue-400">CareerAI Assessment</p>
               <h1 className="mt-2 text-3xl font-bold sm:text-4xl">Discover Your Technical Strengths</h1>
-              <p className="mt-2 text-slate-400">Answer the questions based on your current knowledge.</p>
+              <p className="mt-2 text-slate-400">
+                Answer the questions based on your current knowledge. Each
+                skill is tested with up to five questions so your proficiency
+                level can be detected accurately.
+              </p>
             </div>
             <div className="rounded-xl border border-slate-800 bg-slate-900 px-5 py-3 text-center"><p className="text-xs text-slate-400">Question</p><p className="text-xl font-bold">{currentIndex + 1} / {questions.length}</p></div>
           </div>

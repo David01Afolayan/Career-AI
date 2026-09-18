@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { getSkillField } from "@/lib/skill-fields";
 
 export const dynamic = "force-dynamic";
 
@@ -44,8 +45,8 @@ export async function GET(
 
     const skills = Array.from(skillMap.values()).map((skill) => {
       const percentage = skill.total ? Math.round((skill.correct / skill.total) * 100) : 0;
-      const proficiency = percentage >= 80 ? "Advanced" : percentage >= 60 ? "Intermediate" : percentage >= 40 ? "Basic" : "Beginner";
-      return { ...skill, percentage, proficiency };
+      const proficiency = percentage >= 80 ? "Professional" : percentage >= 60 ? "Advance" : percentage >= 40 ? "Intermediate" : "Beginner";
+      return { ...skill, field: getSkillField(skill.skillName), percentage, proficiency };
     }).sort((a, b) => b.percentage - a.percentage);
 
     return NextResponse.json({
