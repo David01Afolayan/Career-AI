@@ -7,6 +7,11 @@ import StudentMenu from "@/components/StudentMenu";
 type Profile = {
   name: string;
   email: string;
+  role?: string;
+  adminEmployeeId?: string | null;
+  adminProfession?: string | null;
+  adminDepartment?: string | null;
+  createdAt?: string;
   profileImage: string | null;
   matricNumber: string | null;
   department: string | null;
@@ -34,6 +39,10 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile>({
     name: "",
     email: "",
+    role: "STUDENT",
+    adminEmployeeId: "",
+    adminProfession: "",
+    adminDepartment: "",
     profileImage: null,
     matricNumber: "",
     department: "",
@@ -254,6 +263,28 @@ export default function ProfilePage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-8">
+          {profile.role === "ADMIN" ? (
+            <>
+              <section className="rounded-2xl border border-cyan-500/20 bg-slate-900 p-6">
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-400">Administrator Profile</p>
+                <h2 className="mt-2 text-2xl font-semibold">Platform management details</h2>
+                <p className="mt-2 text-sm text-slate-400">These details identify your administrative role and organization.</p>
+                <div className="mt-6 grid gap-5 md:grid-cols-2">
+                  <InputField label="Full Name" value={profile.name} onChange={(value) => updateField("name", value)} required editable={editing} />
+                  <InputField label="Email" value={profile.email} disabled />
+                  <InputField label="Employee ID" value={profile.adminEmployeeId || ""} onChange={(value) => updateField("adminEmployeeId", value)} required editable={editing} />
+                  <InputField label="Profession" value={profile.adminProfession || ""} onChange={(value) => updateField("adminProfession", value)} required editable={editing} />
+                  <InputField label="Department" value={profile.adminDepartment || ""} onChange={(value) => updateField("adminDepartment", value)} required editable={editing} />
+                </div>
+              </section>
+              <section className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
+                <h2 className="text-xl font-semibold">Account Access</h2>
+                <p className="mt-2 text-sm text-slate-400">Role: <span className="font-semibold text-cyan-400">Administrator</span></p>
+                <p className="mt-2 text-sm text-slate-400">Your unique administrator key is used during sign-in and is never displayed here.</p>
+              </section>
+            </>
+          ) : (
+            <>
           <ProfileSection title="Personal Information">
             <InputField label="Full Name" value={profile.name} onChange={(value) => updateField("name", value)} required editable={editing} />
             <InputField label="Email" value={profile.email} disabled />
@@ -277,7 +308,10 @@ export default function ProfilePage() {
               <TextAreaField label="Experience" placeholder="Describe your internship, freelance work, jobs or other relevant experience..." value={profile.experience || ""} onChange={(value) => updateField("experience", value)} editable={editing} />
             </div>
           </section>
+            </>
+          )}
 
+          {profile.role !== "ADMIN" && (
           <section className="rounded-2xl border border-slate-800 bg-slate-900 p-6">
             <h2 className="mb-2 text-xl font-semibold">Skills</h2>
             <p className="mb-6 text-sm text-slate-400">
@@ -348,6 +382,7 @@ export default function ProfilePage() {
               })}
             </div>
           </section>
+          )}
 
           {editing && (
             <button type="submit" disabled={saving} className="w-full rounded-xl bg-cyan-500 px-6 py-4 font-semibold text-slate-950 hover:bg-cyan-400 disabled:opacity-50">

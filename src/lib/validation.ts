@@ -11,6 +11,13 @@ export const registrationSchema = z.object({
 
 export const adminKeySchema = z.string().trim().min(8).max(128);
 
+export const adminProfileSchema = z.object({
+  name: z.string().trim().min(2).max(100),
+  adminEmployeeId: z.string().trim().min(2).max(50),
+  adminProfession: z.string().trim().min(2).max(100),
+  adminDepartment: z.string().trim().min(2).max(100),
+});
+
 const nullableText = (max: number) =>
   z.preprocess(
     (value) => value === "" || value === undefined ? null : value,

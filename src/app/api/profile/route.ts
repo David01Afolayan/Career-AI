@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { profileSchema } from "@/lib/validation";
+import { adminProfileSchema, profileSchema } from "@/lib/validation";
 import { checkRateLimit, rateLimitResponse } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
@@ -54,6 +54,11 @@ export async function GET() {
       profile: {
         name: user.name,
         email: user.email,
+        role: user.role,
+        adminEmployeeId: user.adminEmployeeId,
+        adminProfession: user.adminProfession,
+        adminDepartment: user.adminDepartment,
+        createdAt: user.createdAt,
         profileImage: user.profileImage,
         matricNumber: student.matricNumber,
         department: student.department,
@@ -86,20 +91,42 @@ export async function PUT(request: Request) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const userId = Number(session.user.id);
+    if (!Number.isInteger(userId)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const rateLimit = await checkRateLimit(`profile:${session.user.id}`, 30, 10 * 60 * 1000);
     if (!rateLimit.allowed) return NextResponse.json({ error: "Too many profile updates. Please try again later." }, { status: 429, headers: rateLimitResponse(rateLimit.resetAt) });
     let body: unknown;
     try { body = await request.json(); } catch { return NextResponse.json({ error: "Invalid request body." }, { status: 400 }); }
+    const currentUser = await db.user.findUnique({ where: { id: userId } });
+    if (!currentUser) return NextResponse.json({ error: "User not found" }, { status: 404 });
+    if (currentUser.role === "ADMIN") {
+      const adminParsed = adminProfileSchema.safeParse(body);
+      if (!adminParsed.success) return NextResponse.json({ error: "Please complete the administrator profile fields." }, { status: 400 });
+      const updatedAdmin = await db.user.update({
+        where: { id: userId },
+        data: adminParsed.data,
+      });
+      return NextResponse.json({
+        message: "Administrator profile updated successfully.",
+        profile: {
+          name: updatedAdmin.name,
+          email: updatedAdmin.email,
+          role: updatedAdmin.role,
+          adminEmployeeId: updatedAdmin.adminEmployeeId,
+          adminProfession: updatedAdmin.adminProfession,
+          adminDepartment: updatedAdmin.adminDepartment,
+          createdAt: updatedAdmin.createdAt,
+          profileImage: updatedAdmin.profileImage,
+          skills: [],
+        },
+      });
+    }
     const parsed = profileSchema.safeParse(body);
     if (!parsed.success) return NextResponse.json({ error: "Please correct the submitted profile information.", fields: parsed.error.flatten().fieldErrors }, { status: 400 });
     const data = parsed.data;
-
-    const userId = Number(session.user.id);
-
-    if (!Number.isInteger(userId)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
 
     const result = await db.$transaction(async (transaction) => {
       const user = await transaction.user.update({
